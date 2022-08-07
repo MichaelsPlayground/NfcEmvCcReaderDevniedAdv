@@ -239,8 +239,11 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             } else {
                 idContentString = idContentString + "\n" + " serviceCode3Enum is not readable";
             }
+            // section for servicecodes ends
 
-                    // section for servicecodes ends
+
+
+
 
             // ACHTUNG: AFL read, last byte = boolean isInvolvedInOfflineDataAuthentication = (recordNum - startRecordNumber + 1) <= aef.getNumRecordsInvolvedInOfflineDataAuthentication();
 

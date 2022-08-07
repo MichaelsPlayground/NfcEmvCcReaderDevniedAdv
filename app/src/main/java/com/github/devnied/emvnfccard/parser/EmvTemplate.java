@@ -344,7 +344,7 @@ public class EmvTemplate {
 	 * Add default parser implementation
 	 */
 	private void addDefaultParsers() {
-		parsers.add(new GeldKarteParser(this));
+		//parsers.add(new GeldKarteParser(this));
 		//parsers.add(new EmvParser(this));
 		parsers.add(new EmvParser(this, emvCardAnalyze));
 	}
@@ -475,6 +475,8 @@ public class EmvTemplate {
 			if (LOGGER.isDebugEnabled()) {
 				LOGGER.debug("SFI found:" + sfi);
 			}
+			// todo remove #*# debug print
+			System.out.println("*#* Check SFI is not null, parsing the data *#*");
 			// For each records
 			for (int rec = 0; rec < MAX_RECORD_SFI; rec++) {
 				// todo remove #*# debug print
