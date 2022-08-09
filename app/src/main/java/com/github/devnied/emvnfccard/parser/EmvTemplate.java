@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import fr.devnied.bitlib.BytesUtils;
 
 /**
@@ -375,6 +376,9 @@ public class EmvTemplate {
 		return this;
 	}
 
+	private EmvCardSingleAid emvCardSingleAid;
+
+
 	/**
 	 *
 	 * Section for single tasks start
@@ -387,14 +391,17 @@ public class EmvTemplate {
 	 * @return true is succeed false otherwise
 	 * @throws CommunicationException communication error
 	 */
-	public byte[] selectPpse() throws CommunicationException {
+	public byte[] selectPpse(EmvCardSingleAid pEmvCardSingleAid) throws CommunicationException {
+		this.emvCardSingleAid = pEmvCardSingleAid;
 		System.out.println("#*# selectPpse");
 		byte[] apduSelectPpseCommand = new CommandApdu(CommandEnum.SELECT, PPSE, 0).toBytes();
-		emvCardAnalyze.setApduSelectPpseCommand(apduSelectPpseCommand);
+		emvCardSingleAid.setApduSelectPpseCommand(apduSelectPpseCommand);
 		byte[] apduSelectPpseResponse = provider.transceive(apduSelectPpseCommand);
+		emvCardSingleAid.setApduSelectPpseResponse(apduSelectPpseResponse);
+		emvCardSingleAid.setApduSelectPpseParsed(TlvUtil.prettyPrintAPDUResponse(apduSelectPpseResponse));
 		System.out.println("#*# apduSelectPpseCommand: " + BytesUtils.bytesToString(apduSelectPpseCommand));
 		System.out.println("#*# apduSelectPpseResponse: " + BytesUtils.bytesToString(apduSelectPpseResponse));
-		emvCardAnalyze.setApduSelectPpseResponse(apduSelectPpseResponse);
+
 		return apduSelectPpseResponse;
 	}
 
@@ -430,12 +437,13 @@ public class EmvTemplate {
 		// todo null or empty check
 		byte[] apduSelectPidCommand = new CommandApdu(CommandEnum.SELECT, aidByte, 0).toBytes();
 		// todo use List<byte[]> getApduSelectPidCommands()
-		emvCardAnalyze.setApduSelectPidCommand(apduSelectPidCommand);
+		emvCardSingleAid.setApduSelectPidCommand(apduSelectPidCommand);
 		byte[] apduSelectPidResponse = provider.transceive(apduSelectPidCommand);
+		emvCardSingleAid.setApduSelectPidResponse(apduSelectPidResponse);
+		emvCardSingleAid.setApduSelectPidParsed(TlvUtil.prettyPrintAPDUResponse(apduSelectPidResponse));
 		System.out.println("#*# apduSelectPidCommand: " + BytesUtils.bytesToString(apduSelectPidCommand));
 		System.out.println("#*# apduSelectPidResponse: " + BytesUtils.bytesToString(apduSelectPidResponse));
 		// todo use List<byte[]> getApduSelectPidResponses()
-		emvCardAnalyze.setApduSelectPidResponse(apduSelectPidResponse);
 		return apduSelectPidResponse;
 
 		/*
@@ -506,6 +514,7 @@ public class EmvTemplate {
 		// Extract Bank data
 		//extractBankData(pSelectResponse);
 
+		/*
 		// DKB Visa cards makes some problems, seems to be a wrong GPO because the card responses 69 84
 		if (ResponseUtils.contains(gpo, SwEnum.SW_6984)) {
 			System.out.println("#*# parse gpo 1.st failed with response: 69 84, trying another PDOL");
@@ -517,6 +526,8 @@ public class EmvTemplate {
 			gpo = provider.transceive(pdolNew);
 			System.out.println("#*# parse with pdolNew gpo: " + BytesUtils.bytesToString(gpo));
 		}
+
+		 */
 
 		// Check empty PDOL
 		if (!ResponseUtils.isSucceed(gpo)) {
@@ -548,6 +559,14 @@ public class EmvTemplate {
 		}
 */
 		System.out.println("#*# parse with SelectResponse gpo: " + BytesUtils.bytesToString(gpo));
+		boolean isGetProcessingOptionsSuccess = ResponseUtils.isSucceed(gpo);
+		if (isGetProcessingOptionsSuccess) {
+			emvCardSingleAid.setGetProcessingOptionsSucceed(true);
+		} else {
+			emvCardSingleAid.setGetProcessingOptionsSucceed(false);
+		}
+		emvCardSingleAid.setApduGetProcessingOptionsResponse(gpo);
+		emvCardSingleAid.setApduGetProcessingOptionsParsed(TlvUtil.prettyPrintAPDUResponse(gpo));
 		return gpo;
 	}
 
@@ -563,6 +582,14 @@ public class EmvTemplate {
 		byte[] gpo;
 		gpo = provider.transceive(pdolNew);
 		System.out.println("#*# parse with pdolNew gpo: " + BytesUtils.bytesToString(gpo));
+		boolean isGetProcessingOptionsSuccess = ResponseUtils.isSucceed(gpo);
+		if (isGetProcessingOptionsSuccess) {
+			emvCardSingleAid.setGetProcessingOptionsVisaSucceed(true);
+		} else {
+			emvCardSingleAid.setGetProcessingOptionsVisaSucceed(false);
+		}
+		emvCardSingleAid.setApduGetProcessingOptionsVisaResponse(gpo);
+		emvCardSingleAid.setApduGetProcessingOptionsVisaParsed(TlvUtil.prettyPrintAPDUResponse(gpo));
 		return gpo;
 	}
 
@@ -614,7 +641,7 @@ public class EmvTemplate {
 	public byte[] getGpoForVisaCards() {
 		System.out.println("#*# getGpoForVisa (complete run)");
 		try {
-			byte[] selectPpseResponse = selectPpse();
+			byte[] selectPpseResponse = selectPpse(emvCardSingleAid);
 			List<byte[]> aidsList = getAidsFromPpseResponse(selectPpseResponse);
 			// we are using just the first aid
 			byte[] selectedAid = aidsList.get(0);
@@ -698,12 +725,18 @@ public class EmvTemplate {
 		byte data[] = TlvUtil.getValue(pGpo, EmvTags.RESPONSE_MESSAGE_TEMPLATE_1);
 		if (data != null) {
 			System.out.println("*#* extractCommonsCardData try to find RESPONSE_MESSAGE_TEMPLATE_1 found");
+			emvCardSingleAid.setResponseMessageTemplate1(data);
+			emvCardSingleAid.setResponseMessageTemplate1Parsed(TlvUtil.prettyPrintAPDUResponse(data));
 			data = ArrayUtils.subarray(data, 2, data.length);
 		} else { // Extract AFL data from Message template 2
 			System.out.println("*#* extractCommonsCardData try to find RESPONSE_MESSAGE_TEMPLATE_2");
 			ret = extractTrackData(card, pGpo);
 			if (!ret) {
+				//emvCardSingleAid.setResponseMessageTemplate1(data);
+				//emvCardSingleAid.setResponseMessageTemplate1Parsed(TlvUtil.prettyPrintAPDUResponse(data));
 				data = TlvUtil.getValue(pGpo, EmvTags.APPLICATION_FILE_LOCATOR);
+				emvCardSingleAid.setApplicationFileLocator(data);
+				//emvCardSingleAid.setApplicationFileLocatorParsed(TlvUtil.prettyPrintAPDUResponse(data));
 				System.out.println("*#* extractCommonsCardData APPLICATION_FILE_LOCATOR data: " + BytesUtils.bytesToString(data));
 			} else {
 				// todo anything else to read
@@ -716,6 +749,9 @@ public class EmvTemplate {
 			System.out.println("*#* extractCommonsCardData extract AFL");
 			List<Afl> listAfl = extractAfl(data);
 			// for each AFL
+			List<byte[]> apduReadRecordsCommand = new ArrayList<byte[]>();
+			List<byte[]> apduReadRecordsResponse = new ArrayList<byte[]>();
+			List<String> apduReadRecordsParsed = new ArrayList<String>();
 			for (Afl afl : listAfl) {
 				// check all records
 				for (int index = afl.getFirstRecord(); index <= afl.getLastRecord(); index++) {
@@ -724,7 +760,9 @@ public class EmvTemplate {
 					byte[] apduReadRecordResponse = provider.transceive(apduReadRecordCommand);
 					System.out.println("#*# apduReadRecordCommand: " + BytesUtils.bytesToString(apduReadRecordCommand));
 					System.out.println("#*# apduReadRecordResponse: " + BytesUtils.bytesToString(apduReadRecordResponse));
-
+					apduReadRecordsCommand.add(apduReadRecordCommand);
+					apduReadRecordsResponse.add(apduReadRecordResponse);
+					apduReadRecordsParsed.add(TlvUtil.prettyPrintAPDUResponse(apduReadRecordResponse));
 					// Extract card data
 					if (ResponseUtils.isSucceed(apduReadRecordResponse)) {
 						// todo is there anything else to read ?
@@ -736,6 +774,10 @@ public class EmvTemplate {
 					}
 				}
 			}
+			emvCardSingleAid.setAfls(listAfl);
+			emvCardSingleAid.setApduReadRecordsCommand(apduReadRecordsCommand);
+			emvCardSingleAid.setApduReadRecordsResponse(apduReadRecordsResponse);
+			emvCardSingleAid.setApduReadRecordsResponseParsed(apduReadRecordsParsed);
 		}
 		return data;
 		// on new Visa the card number PAN is in Tag 57

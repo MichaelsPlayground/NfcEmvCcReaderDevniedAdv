@@ -476,4 +476,268 @@ It present in Mag Track1 and Track2
 It present in 57 [track 2 equivalent data] EMV Tag.
 it present in 5f24 emv tag.
 
+Working with AFL:
 
+https://stackoverflow.com/questions/50157927/chip-emv-getting-afl-for-every-smart-card
+Chip EMV - Getting AFL for every smart card
+
+Continue from: EMV Reading PAN Code
+
+I'm working in C, so I havn't Java tools and all the functions that parse automatically the response of APDU command. I want to read all types of smart cards. I have to parse the response of an GET PROCESSING OPTIONS and get the AFL (Access File Locator) of every card.
+
+I have three cards with three different situation:
+
+A) HelloBank: 77 12 82 2 38 0 94 c 10 2 4 1 18 1 1 0 20 1 1 0 90
+B) PayPal: 77 12 82 2 39 0 94 c 18 1 1 0 20 1 1 0 28 1 3 1 90
+C) PostePay: 80 a 1c 0 8 1 1 0 18 1 2 0 90
+Case A)
+
+I've got three different AFL: 10 2 4 1, 18 1 1 0, 20 1 1 0 So I send 00 B2 SFI P2 00 where SFI was 10>>3 (10 was first byte of first AFL) and P2 was SFI<<3|4 and this way I got the correct PAN Code of my card.
+
+Case B)
+
+I've got three different AFL: 18 1 1 0, 20 1 1 0, 28 1 3 1. So I send 00 B2 SFI P2 00 builded in the same way as Case A, but I got the response 6A 83 for every AFL.
+
+Case C) I've got two different AFL: 8 1 1 0, 18 1 2 0 but I cannot parse those automatically because there isn't the same TAG of previous response. If I use those AFL it worked and I can get the PAN Code of the card.
+
+How can I make an universal way to read the correct AFL and how can I make the correct command with those AFL?
+apdu
+emv
+Share
+Edit
+Follow
+Close
+Flag
+edited Feb 11, 2019 at 7:43
+user avatar
+Lundin
+177k3838 gold badges241241 silver badges372372 bronze badges
+asked May 3, 2018 at 14:48
+user avatar
+Valerio Colonnese
+11933 silver badges1010 bronze badges
+
+Sw1 Sw2 ='6A 83'| Record not found, make sure your command is correct in respect of SFI and record number, –
+Arjun
+May 4, 2018 at 5:28
+Add a comment
+Start a bounty
+1 Answer
+Sorted by:
+
+
+9
+
+Here is the decoding of AFL:
+
+You will get the AFL in multiple of 4 Bytes normally. Divide your complete AFL in a chunk of 4 Bytes. Lets take an example of 1 Chunk: AABBCCDD
+
+AA -> SFI (Decoding is described below)
+
+BB -> First Record under this SFI
+
+CC -> Last Record under this SFI
+
+DD -> Record involved for Offline Data Authentication (Not for your use for the moment)
+
+Taking your example 10 02 04 01 18 01 01 00 20 01 10 00
+
+Chunks are 10 02 04 01, 18 01 01 00, 20 01 10 00
+
+10 02 04 01 --> Taking 1st Byte 10 : 00010000 Take initial 5 bits from MSB --> 00010 means 2 : Means SFI 2
+
+Taking 2nd Byte 02 : First Record under SFI 2 is 02
+
+Taking 3rd Byte 04 : Last Record under SFI 2 is 04
+
+Excluding 4 Byte explanation since no use
+
+Summary : SFI 2 contains record 2 to 4
+
+How Read Record command will form :
+
+APDU structure : CLA INS P1 P2 LE
+
+CLA 00
+
+INS B2
+
+P1 (Rec No)02 (SInce in this SFI 2 inital record is 02)
+
+P2 (SFI) SFI 02 : Represent the SFI in 5 binay digit 00010 and then append 100 in the end : 00010100 : In Hex 14 So P2 is 14
+
+LE 00
+
+APDU to Read SFI 2 Rec 2 : 00 B2 02 14 00
+
+APDU to Read SFI 2 Rec 3 : 00 B2 03 14 00
+
+APDU to Read SFI 2 Rec 4 : 00 B2 04 14 00
+
+Now if you will try to Read Rec 5, Since this Rec is not present you will get SW 6A83 in this case.
+
+Use the same procedure for all chunk to identify the available Records and SFIs BY this mechanisam you can write the function to parse the AFL
+Share
+Edit
+Follow
+Flag
+answered May 4, 2018 at 6:02
+user avatar
+Gaurav Shukla
+38211 gold badge33 silver badges1111 bronze badges
+
+Thanks for answer, but it's not the answer that I'm looking for. You have used the only one example that worked for me. So for the case A my APDU command was 00 B2 02 14 00, where 02 was first byte 10 >> 3 and 14 was 02<<3|4. Where with >>3 and <<3 is a 3 bits shifting to right/left. So it worked and I got the correct answer. So my questions are: 1) My method is wrong for the other cases, why? 2) How can I understand where the chunks start? I mean that in the Case A and B I have a structure like 77 - 82 2 - 94 - but in the Case C the initial structure is completly different. Why? –
+Valerio Colonnese
+May 4, 2018 at 9:40
+
+could you please write your APDU commands to Read the records for 2nd AFL ( For Paypal) –
+Gaurav Shukla
+May 4, 2018 at 9:54
+
+For the first chunk: 18 1 1 0 -> 00 B2 03 1C 00 -> 6A 83 For the second chunk: 20 1 1 0 -> 00 B2 04 24 00 -> 6A 83 For the third chunk: 28 1 3 1 -> 00 B2 05 2C 00 -> 6A 83 –
+Valerio Colonnese
+May 4, 2018 at 10:03
+
+The correct APDUs are: For First Chunk 18 01 01 00 -- >SFI 3 Starting Rec is 1 last Rec is also 1, so the only APDU is 00 B2 01 1C 00 For Second Chunk 20 01 01 00--> SFI 4 Starting Rec is 1 last Rec is also 1, so the only APDU is 00 B2 01 24 00 For last chunk 28 01 03 01--> SFI 5 Starting record is 01 last record is 03 means 3 records available in this SFI. APDU are: 00 B2 01 2C 00 00 B2 02 2C 00 00 B2 03 2C 00 See again my answer to understand the Read Record APDU formation. –
+Gaurav Shukla
+May 4, 2018 at 10:11
+
+Regarding your 2nd question: GPO response may appears in 2 response template. Format 1 (Staring with Tag 80) or Format 2 (starting with Tag 77). choosing template is implementation dependent. For tag 77, response comes in TLV form (As you can see in your Hello Bank & Paypal. it will contains tag 94 which will indicate the AFL). When GPO comes with Tag 80 then it will not be in TLV form. First byte will be tag 80 second one will be length of data 3rd and 4th will be AIP and from 5th byte to end(before status word 9000) is AFL in this case. –
+Gaurav Shukla
+May 4, 2018 at 10:17
+
+00 B2 01 0C 00, 00 B2 01 1C 00, 00 B2 02 1C 00, These are the APDUs for Postepay example –
+Gaurav Shukla
+May 4, 2018 at 10:20
+
+How do you get 10 to be 2 and 18 to be 1C and 28 to be 2C? –
+Steffan
+Mar 6, 2019 at 14:52
+
+Ok, finnaly I got it :) -> 18 = HEX -> convert to Binary -> remove digits after the first 5 and add 100 at end -> convert back to HEX and then you get 1C –
+Steffan
+Mar 6, 2019 at 15:10
+
+https://stackoverflow.com/questions/50104424/emv-reading-pan-code
+EMV Reading PAN Code
+
+3
+
+
+1
+I need to read the PAN Code of every possible card through chip. In my job I have to use only C and I haven't routines that can help me in this boring task. So that's the steps APDU that I use:
+
+1) SELECT 1PAY.SYS.DDF01
+
+00 A4 0400 0E 315041592E5359532E4444463031    
+and then 00 C0 0000 22 315041592E5359532E4444463031 from the response to read all datas. Complete Response:
+
+6f 20 e 84 31 50 41 59 2e 53 59 53 2e 44 44 46 30 31 a5 e 88 1 1 5f 2d 69 8 74 65 6e 66 72 65 73 90
+
+2) READ RECORD to get the specific AID
+
+00 B2 010C 00
+Complete Response:
+
+70 17 61 15 4f 7 a0 0 0 0 4 30 60 50 7 4d 41 53 54 52 45 4f 87 1 1 90
+3) SELECT AID (in my case the AID is A0000000043060 from the previous response)
+
+00 A4 0400 07 A0000000043060
+Also in this case, I have response: 61 36, so I re-call the command with:
+
+00 C0 0000 36 A0000000043060
+Complete Response:
+
+6f 0 41 45 53 52 4f 54 87 1 1 34 84 a0 7 0 0 4 30 60 a5 29 50 7 4d 5f 2d 8 69 74 65 6e 72 66 65 73 bf c f 9f 4d 2 b a 9f 6e 3 7 80 0 0 30 30 0 90
+Now every command that I use, will get wrong message. I don't understand if I have to use READ DATA, READ RECORD, GET PROCESSING OPTIONS or something else. Can you give me a tip on what I have to do now?
+
+I need to get the 16 char code of the card, the one that is normally printed clearly on the card.
+
+Thanks to everyone
+apdu
+emv
+Share
+Edit
+Follow
+Close
+Flag
+edited Feb 11, 2019 at 7:43
+user avatar
+Lundin
+177k3838 gold badges241241 silver badges372372 bronze badges
+asked Apr 30, 2018 at 16:17
+user avatar
+Valerio Colonnese
+11933 silver badges1010 bronze badges
+
+can you tell why you need the pan/track data alone ? –
+Adarsh Nanu
+May 1, 2018 at 11:54
+1
+
+@Valerio colonnese Are you talking about the 16 digit numeric code printed on each card..?? If yes then it is possible to retrieve but what is the use case for you?. I am asking because this is one of the sensitive information stored in card. –
+Gaurav Shukla
+May 1, 2018 at 14:29
+
+@Gaurav_Orai I have to tokenize it for a program of loyalty card. –
+Valerio Colonnese
+May 2, 2018 at 7:49
+
+I want to detail my answer: I need only the PAN code because I have to map it with a custom card for a loyalty service. I have to call my API with that code, I'm not interested to do payment with that, so I don't need expyration date, PIN, or anything of banking services. –
+Valerio Colonnese
+May 2, 2018 at 10:18
+Add a comment
+Start a bounty
+1 Answer
+Sorted by:
+
+
+5
+
+The 8 Byte (16 Digit) code printed on Smart Card (Payment Chip Card) is retrievable. This information is the part of "Track 2 Equivalent Data" personalized in the records in Tag 57.
+
+You can slice the initial 8 Bytes of this "Track 2 Equivalent Data" to get your code.
+
+Now How to Get "Track 2 Equivalent Data":
+
+SELECT Payment Application (excluding the PSE/PPSE process here, since you are able to do it)
+Send GPO command. Normally 80 A8 00 00 02 83 00 is the APDU for GPO if no PDOL data is required in GPO command APDU. (If 9F38 tag is not present in the response of SELCT command then Simply send this APDU, otherwise PDOL must be created). See EMV 4.3 Book 3 Section 6.5.8 for more details about GPO response.
+You will get AFL in the response of GPO and Read all the available records from application as per AFL. Normally track 2 data could be found within 2 or 3 initial records.
+
+To understand the coding of AFL you can refer Section 10.2 EMV 4.3 Book 3.
+
+To understand the READ RECORD APDU construction refer EMV 4.3 Book 1 Section 11.2.
+One of record must contain Tag 57 and you can fetch the value.
+Share
+Edit
+Follow
+Flag
+answered May 2, 2018 at 10:24
+user avatar
+Gaurav Shukla
+38211 gold badge33 silver badges1111 bronze badges
+
+There is also a tag 5A - Application Primary Account Number (PAN) in EMV card, can also read this tag from AFL to get only 16 digit PAN Number. –
+Arjun
+May 2, 2018 at 11:01
+
+@Arjun yes it could be another solution. –
+Gaurav Shukla
+May 2, 2018 at 11:11
+
+@Gaurav_Orai Thanks for the answer. So I've tried to send the GPO as described in your answer. I'd got a 12 chars AFL response with values 10 02 04 01 18 01 01 00 20 01 01 00 So, EMV 4.3 Book 3, I have 3 files that I have to read. I have to send 3 READ record command with params in the AFL So, for example, to build those command I used: 02 B2 02 04 01 for the first quartet, where 02 is 10 (first byte) >> 3, B2 is READ RECORD, and the other 3 bytes from the previous response. But I have always response 6E 00, Class not supported. –
+Valerio Colonnese
+May 2, 2018 at 14:00
+
+Considering 10 02 04 01 18 01 01 00 20 01 01 00 as AFL which is returned in response of GPO. Now dividing this into the chunks of 4-4 Bytes. 1. 10 02 04 01 - SFI 2 Record 2 to 4 2. 18 01 01 00 - SFI 3 Record 1 only 3. 20 01 01 00 - SFI 4 Record 1 only So Now the Read record command to Read all the records would be like: 00 B2 02 14 00 to Read the 2nd Record of SFI 2 00 B2 03 14 00 to Read the 2nd Record of SFI 2 00 B2 04 14 00 to Read the 2nd Record of SFI 2 00 B2 01 1C 00 to Read the only available 1st Record of SFI 3 00 B2 01 24 00 to Read the only available 1st Record of SFI 3 –
+Gaurav Shukla
+May 2, 2018 at 15:41
+
+try this and let me know –
+Gaurav Shukla
+May 2, 2018 at 15:41
+
+Thanks @Gaurav_Orai It worked fine!!! Thanks also to Arjun for the answer, the tag 5A it's correct! –
+Valerio Colonnese
+May 2, 2018 at 16:00
+Add a comment

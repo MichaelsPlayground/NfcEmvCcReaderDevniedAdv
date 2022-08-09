@@ -1,8 +1,15 @@
 package de.androidcrypto.nfcemvccreaderdevnied;
 
+import android.os.Build;
+
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Date;
 
 public class Utils {
 
@@ -162,6 +169,16 @@ public class Utils {
             return true;
         } else {
             return false;
+        }
+    }
+
+    public static String getTimestamp() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return ZonedDateTime
+                    .now(ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("uuuu.MM.dd HH:mm:ss"));
+        } else {
+            return new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(new Date());
         }
     }
 }

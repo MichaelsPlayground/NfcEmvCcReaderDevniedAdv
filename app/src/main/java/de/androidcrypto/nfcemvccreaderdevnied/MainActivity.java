@@ -30,6 +30,7 @@ import android.widget.Toast;
 
 import com.github.devnied.emvnfccard.enums.EmvCardScheme;
 import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
+import com.github.devnied.emvnfccard.model.Afl;
 import com.github.devnied.emvnfccard.model.Application;
 import com.github.devnied.emvnfccard.model.EmvCard;
 
@@ -37,6 +38,7 @@ import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAnalyze;
 
 import com.github.devnied.emvnfccard.model.enums.ServiceCode3Enum;
 import com.github.devnied.emvnfccard.parser.EmvTemplate;
+import com.github.devnied.emvnfccard.utils.ResponseUtils;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 
 import java.io.IOException;
@@ -46,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.ApplicationInterchangeProfile;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.AtrUtils;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.CVMList;
@@ -100,8 +103,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 }
             });
             isoDep.connect();
-            byte[] response;
-            String idContentString = "Content of ISO-DEP tag";
+            String idContentString = "Content of ISO-DEP EMV tag";
 
             PcscProvider provider = new PcscProvider();
             provider.setmTagCom(isoDep);
@@ -118,18 +120,109 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     .setConfig(config)
                     .build();
 
-            // todo check ResponseSuccess
+            EmvCardSingleAid emvCardSingleAid = new EmvCardSingleAid();
 
+            idContentString = idContentString + "\n" + "\n" + "---- step 01: selectPPSE ----";
+            // we are asking the card which aids are available on the card
+            byte[] firstSelectPpseResponse = parser.selectPpse(emvCardSingleAid);
+            boolean firstSelectPpseResponseSuccess = ResponseUtils.isSucceed(firstSelectPpseResponse);
+            if (!firstSelectPpseResponseSuccess) {
+                // not successfull - maybe no EMV card ?
+                emvCardSingleAid.setIsParsingCompleted(false);
+                idContentString = idContentString + "\n" + "\n" + "---- ERROR selectPPSE failure ----" + "\n";
+                return;
+            }
+            idContentString = idContentString + "\n" + "selectPpseResponse: " + BytesUtils.bytesToString(firstSelectPpseResponse);
+            idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(firstSelectPpseResponse);
+
+            idContentString = idContentString + "\n" + "\n" + "---- step 02: get AID(s) from response ----";
+            List<byte[]> aidsList = parser.getAidsFromPpseResponse(firstSelectPpseResponse);
+            int aidsListSize = aidsList.size();
+            idContentString = idContentString + "\n" + "nr of aids found: " + aidsListSize;
+            // iterate through the aids
+            for (int i = 0; i < aidsList.size(); i++) {
+                byte[] selectedAid = aidsList.get(i);
+                idContentString = idContentString + "\n" + "\n" + "aid nr: " + i + " AID: " + BytesUtils.bytesToString(selectedAid);
+                // we store the data in a fresh/unused model
+                emvCardSingleAid = new EmvCardSingleAid();
+                // to get best results we start the complete reading from the beginning
+                byte[] selectPpseResponse = parser.selectPpse(emvCardSingleAid);
+                idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(selectPpseResponse);
+                // store the cleartext parsed response
+                //emvCardSingleAid.setApduSelectPpseParsed(TlvUtil.prettyPrintAPDUResponse(selectPpseResponse));
+                String timestampString = Utils.getTimestamp();
+                emvCardSingleAid.setTimestampReadString(timestampString);
+                emvCardSingleAid.setSelectedAid(selectedAid);
+                idContentString = idContentString + "\n" + "reading starts: " + timestampString;
+
+                // the following steps are run in the aid loop
+                idContentString = idContentString + "\n" + "\n" + "---- step 03 select PID with AID";
+                byte[] selectPidResponse = parser.selectPid(selectedAid);
+                boolean selectPidResponseSuccess = ResponseUtils.isSucceed(selectPidResponse);
+                if (!selectPidResponseSuccess) {
+                    // not successfull
+                    emvCardSingleAid.setIsParsingCompleted(false);
+                    idContentString = idContentString + "\n" + "\n" + "---- ERROR selectPID failure ----" + "\n";
+                    return;
+                }
+                if (selectPidResponse != null) {
+                    idContentString = idContentString + "\n" + "selectPIDResponse: " + BytesUtils.bytesToString(selectPpseResponse);
+                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(selectPidResponse);
+
+                } else {
+                    idContentString = idContentString + "\n" + "selectPid is not successfull";
+                }
+
+                idContentString = idContentString + "\n" + "\n" + "---- step 04 get Processing Options (PDOL) ----";
+                // this works for all cards but DKB Visa Debit
+                byte[] gpo = parser.parseSelectResponse(selectPidResponse);
+                // this is a test for DKB Visa debit only
+                //byte[] gpoVisa = parser.parseSelectResponseVisa(); // works !
+                if (gpo == null) {
+                    idContentString = idContentString + "\n" + "Notice: even if there is more than one AID only the first AID is run !";
+                    gpo = parser.getGpoForVisaCards();
+                }
+                idContentString = idContentString + "\n" + "gpo: " + BytesUtils.bytesToString(gpo);
+                idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(gpo);
+
+                idContentString = idContentString + "\n" + "\n" + "---- step 05 parse GPO and AFL ----";
+                byte[] extractedCardData = parser.extractCommonsCardData(gpo);
+                if (extractedCardData != null) {
+                    idContentString = idContentString + "\n" + "AFL";
+                    idContentString = idContentString + "\n" + "AFL: " + BytesUtils.bytesToString(emvCardSingleAid.getApplicationFileLocator());
+                    idContentString = idContentString + "\n" + "AFL: " + TlvUtil.prettyPrintAPDUResponse(emvCardSingleAid.getApplicationFileLocator());
+
+                    idContentString = idContentString + "\n" + "extracted data";
+                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(extractedCardData);
+                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(emvCardSingleAid.getApduReadRecordsResponse().get(0));
+
+                }
+                List<Afl> afls = emvCardSingleAid.getAfls();
+                int aflsSize = afls.size();
+                for (int j = 0; j < aflsSize; j++) {
+                    Afl afl = afls.get(j);
+                    idContentString = idContentString + "\n" + "AFL nr: " + j + "SFI: " + afl.getSfi() +
+                            " first rec: " + afl.getFirstRecord() +
+                            " last rec: " + afl.getLastRecord() +
+                            " offline auth: " + afl.isOfflineAuthentication();
+                }
+
+            }
+
+
+
+            // todo check ResponseSuccess
+/*
             // single task starts
             idContentString = idContentString + "\n" + "---- single task start ----";
-            idContentString = idContentString + "\n" + "---- step 01: selectPPSE ----";
-            byte[] selectPpseResponse = parser.selectPpse();
-            idContentString = idContentString + "\n" + "selectPpseResponse: " + BytesUtils.bytesToString(selectPpseResponse);
-            idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(selectPpseResponse);
+
+
+
+
 
             idContentString = idContentString + "\n" + "---- step 02: get AID(s) from response ----";
-            List<byte[]> aidsList = parser.getAidsFromPpseResponse(selectPpseResponse);
-            idContentString = idContentString + "\n" + "nr of aids found: " + aidsList.size();
+
+
             for (int i = 0; i < aidsList.size(); i++) {
                 idContentString = idContentString + "\n" + "aid nr: " + i + " AID: " + BytesUtils.bytesToString(aidsList.get(i));
             }
@@ -155,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             }
             idContentString = idContentString + "\n" + "---- step 03: selectPid ends ----";
 
-            idContentString = idContentString + "\n" + "---- step 04 get Processing Options (PDOL) ----";
+            idContentString = idContentString + "\n" + "\n" + "---- step 04 get Processing Options (PDOL) ----";
             // todo this should be used in emvCardAnalyze: apduSelectPidResponses
             List<byte[]> gpos = new ArrayList<byte[]>();
             int apduSelectPidResponsesSize = apduSelectPidResponses.size();
@@ -196,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
             idContentString = idContentString + "\n" + "---- step 05 parse GPO and AFL ends ----" + "\n";
 
-
+*/
 /*
             idContentString = idContentString + "\n" + "---- single task start ----";
             String[] typeAids;
@@ -243,7 +336,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             idContentString = idContentString + "\n" + "at Description: " + card.getAtrDescription();
             */
 
-            // get the complete analyzed data, analyse them after the data is read completely
+            // get the complete analyzed data, analyse them after the data is read
+
             EmvCardAnalyze emvCardAnalyze = parser.getEmvCardAnalyze();
             byte[] apduSelectPpseCommand = emvCardAnalyze.getApduSelectPpseCommand();
             byte[] apduSelectPpseResponse = emvCardAnalyze.getApduSelectPpseResponse();
