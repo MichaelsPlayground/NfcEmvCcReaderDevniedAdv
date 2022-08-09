@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "NfcEmvCcReaderDevnied"
+rootProject.name = "NfcEmvCcReaderDevniedAdvanced"
 include ':app'
