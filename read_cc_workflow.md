@@ -463,3 +463,17 @@ Further Reading
 EMV Contactless specs are diverged. Each card scheme seems to have their own specification, although the basic protocols (APDU, Ber-TLV, EMV tags) are the common building blocks. There are kernels 2 through 7.
 
 A good introduction video to Mobile NFC payments by Simon Eumes.
+
+
+A single data like PAN is present in multiple places:-
+It present in Mag Track1
+It present in Mag Track2
+It present in 5A EMV Tag
+It present in 57 [track 2 equivalent data] EMV Tag.
+
+or expiry date
+It present in Mag Track1 and Track2
+It present in 57 [track 2 equivalent data] EMV Tag.
+it present in 5f24 emv tag.
+
+

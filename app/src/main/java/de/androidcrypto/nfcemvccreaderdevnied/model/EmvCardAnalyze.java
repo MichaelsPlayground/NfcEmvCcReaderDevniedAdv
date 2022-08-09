@@ -83,23 +83,81 @@ public class EmvCardAnalyze implements Serializable {
         this.apduGetProcessingOptionsResponse = apduGetProcessingOptionsResponse;
     }
 
+    public byte[] getApduSelectPidCommand() {
+        return apduSelectPidCommand;
+    }
+
+    public void setApduSelectPidCommand(byte[] apduSelectPidCommand) {
+        this.apduSelectPidCommand = apduSelectPidCommand;
+    }
+
+    public byte[] getApduSelectPidResponse() {
+        return apduSelectPidResponse;
+    }
+
+    public void setApduSelectPidResponse(byte[] apduSelectPidResponse) {
+        this.apduSelectPidResponse = apduSelectPidResponse;
+    }
+
+    public List<byte[]> getAidsList() {
+        return aidsList;
+    }
+
+    public void setAidsList(List<byte[]> aidsList) {
+        this.aidsList = aidsList;
+    }
+
+    public List<byte[]> getApduSelectPidCommands() {
+        return apduSelectPidCommands;
+    }
+
+    public void setApduSelectPidCommands(List<byte[]> apduSelectPidCommands) {
+        this.apduSelectPidCommands = apduSelectPidCommands;
+    }
+
+    public List<byte[]> getApduSelectPidResponses() {
+        return apduSelectPidResponses;
+    }
+
+    public void setApduSelectPidResponses(List<byte[]> apduSelectPidResponses) {
+        this.apduSelectPidResponses = apduSelectPidResponses;
+    }
 
     // variables for flow
 
     /**
      * apduSelectPpseCommand = step 01
      */
-    private byte[] apduSelectPpseCommand = new byte[0];
+    private byte[] apduSelectPpseCommand;
 
     /**
      * apduSelectPpseResponse = step 01
      */
-    private byte[] apduSelectPpseResponse = new byte[0];
+    private byte[] apduSelectPpseResponse;
 
     /**
      * fciProprietaryTemplateList is the parsed data = step 02
      */
     List<Application> fciProprietaryTemplateList;
+
+    /**
+     * apduSelectPidCommand = single step 03
+     */
+    private byte[] apduSelectPidCommand;
+    private List<byte[]> apduSelectPidCommands;
+
+    /**
+     * apduSelectPidResponse = single step 03
+     */
+    private byte[] apduSelectPidResponse;
+    private List<byte[]> apduSelectPidResponses;
+
+    /**
+     * aidsList = single step 02
+     */
+    private List<byte[]> aidsList;
+
+
 
 
 

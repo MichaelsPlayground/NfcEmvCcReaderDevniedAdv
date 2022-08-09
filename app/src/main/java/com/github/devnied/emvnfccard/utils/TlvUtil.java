@@ -55,7 +55,7 @@ public final class TlvUtil {
 	/**
 	 * Method used to find Tag with ID
 	 *
-	 * @param tagIdBytes
+	 * @param tagId
 	 *            the tag to find
 	 * @return the tag found
 	 */
