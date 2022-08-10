@@ -15,6 +15,8 @@ public class EmvCardSingleAid implements Serializable {
      * author: androidcrypto
      */
 
+    private static final long serialVersionUID = 1289662437814720767L;
+
     /**
      * section for variables
      */

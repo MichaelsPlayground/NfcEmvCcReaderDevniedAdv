@@ -34,6 +34,7 @@ import com.github.devnied.emvnfccard.model.Afl;
 import com.github.devnied.emvnfccard.model.Application;
 import com.github.devnied.emvnfccard.model.EmvCard;
 
+import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAnalyze;
 
 import com.github.devnied.emvnfccard.model.enums.ServiceCode3Enum;
@@ -63,6 +64,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     String tagTypeString = "";
     private static final int REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE = 100;
     Context contextSave;
+
+    EmvCardAids emvCardAids = new EmvCardAids(); // for storage in file
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +124,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     .build();
 
             EmvCardSingleAid emvCardSingleAid = new EmvCardSingleAid();
+            List<byte[]> aids = new ArrayList<byte[]>();
+            List<EmvCardSingleAid> emvCardSingleAids = new ArrayList<EmvCardSingleAid>();
 
             idContentString = idContentString + "\n" + "\n" + "---- step 01: selectPPSE ----";
             // we are asking the card which aids are available on the card
@@ -198,16 +203,27 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                 }
                 List<Afl> afls = emvCardSingleAid.getAfls();
-                int aflsSize = afls.size();
-                for (int j = 0; j < aflsSize; j++) {
-                    Afl afl = afls.get(j);
-                    idContentString = idContentString + "\n" + "AFL nr: " + j + "SFI: " + afl.getSfi() +
-                            " first rec: " + afl.getFirstRecord() +
-                            " last rec: " + afl.getLastRecord() +
-                            " offline auth: " + afl.isOfflineAuthentication();
+                if (afls != null) {
+                    int aflsSize = afls.size();
+                    for (int j = 0; j < aflsSize; j++) {
+                        Afl afl = afls.get(j);
+                        idContentString = idContentString + "\n" + "AFL nr: " + j + "SFI: " + afl.getSfi() +
+                                " first rec: " + afl.getFirstRecord() +
+                                " last rec: " + afl.getLastRecord() +
+                                " offline auth: " + afl.isOfflineAuthentication();
+                    }
+                } else {
+                    idContentString = idContentString + "\n" + "AFL data not available";
                 }
 
+                // store the emvCardSingleAid in the "all" model
+                aids.add(selectedAid);
+                emvCardSingleAids.add(emvCardSingleAid);
             }
+            // now store all data in the all model
+            emvCardAids.setAids(aids);
+            emvCardAids.setEmvCardSingleAids(emvCardSingleAids);
+
 
 
 
@@ -597,6 +613,95 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         }
     }
 
+    // section for storing the model file starts
+
+    // https://stackoverflow.com/questions/2139134/how-to-send-an-object-from-one-android-activity-to-another-using-intents
+
+    private void XexportDumpFile() {
+        if (dumpExportString.isEmpty()) {
+            writeToUiToast("Scan a tag first before writing files :-)");
+            return;
+        }
+        XverifyPermissionsWriteString();
+    }
+
+    // section external storage permission check
+    private void XverifyPermissionsWriteString() {
+        String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                permissions[0]) == PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                permissions[1]) == PackageManager.PERMISSION_GRANTED) {
+            XwriteStringToExternalSharedStorage();
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    permissions,
+                    REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
+        }
+    }
+
+    private void XwriteStringToExternalSharedStorage() {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        // Optionally, specify a URI for the file that should appear in the
+        // system file picker when it loads.
+        //boolean pickerInitialUri = false;
+        //intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri);
+        // get filename from edittext
+        String filename = tagTypeString + "_" + tagIdString + ".txt";
+        // sanity check
+        if (filename.equals("")) {
+            writeToUiToast("scan a tag before writing the content to a file :-)");
+            return;
+        }
+        intent.putExtra(Intent.EXTRA_TITLE, filename);
+        XfileSaverActivityResultLauncher.launch(intent);
+    }
+
+    ActivityResultLauncher<Intent> XfileSaverActivityResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        // There are no request codes
+                        Intent resultData = result.getData();
+                        // The result data contains a URI for the document or directory that
+                        // the user selected.
+                        Uri uri = null;
+                        if (resultData != null) {
+                            uri = resultData.getData();
+                            // Perform operations on the document using its URI.
+                            try {
+                                // get file content from edittext
+                                String fileContent = dumpExportString;
+                                XwriteTextToUri(uri, fileContent);
+                                String message = "file written to external shared storage: " + uri.toString();
+                                writeToUiToast("file written to external shared storage: " + uri.toString());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                writeToUiToast("ERROR: " + e.toString());
+                                return;
+                            }
+                        }
+                    }
+                }
+            });
+
+    private void XwriteTextToUri(Uri uri, String data) throws IOException {
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(contextSave.getContentResolver().openOutputStream(uri));
+            outputStreamWriter.write(data);
+            outputStreamWriter.close();
+        } catch (IOException e) {
+            System.out.println("Exception File write failed: " + e.toString());
+        }
+    }
+
+    // section for storing the model file ends
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_activity_main, menu);
@@ -619,6 +724,17 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
                 //startActivity(i);
                 exportDumpFile();
+                return false;
+            }
+        });
+
+        MenuItem mExportModelFile = menu.findItem(R.id.action_export_model_file);
+        mExportModelFile.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
+                //startActivity(i);
+                //exportDumpFile();
                 return false;
             }
         });
