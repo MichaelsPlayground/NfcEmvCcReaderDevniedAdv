@@ -24,6 +24,11 @@
         app:showAsAction="never"/>
 
     <item
+        android:id="@+id/action_import_model_file"
+        android:title="Import Model File"
+        app:showAsAction="never"/>
+
+    <item
         android:id="@+id/action_clear_dump"
         android:title="Clear Dump"
         app:showAsAction="never"/>

@@ -24,9 +24,10 @@ import com.github.devnied.emvnfccard.iso7816emv.ITerminal;
 import com.github.devnied.emvnfccard.iso7816emv.TLV;
 import com.github.devnied.emvnfccard.iso7816emv.TagAndLength;
 import com.github.devnied.emvnfccard.iso7816emv.impl.DefaultTerminalImpl;
-import com.github.devnied.emvnfccard.model.Afl;
 import com.github.devnied.emvnfccard.model.Application;
 import com.github.devnied.emvnfccard.model.EmvCard;
+
+import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAnalyze;
 
 import com.github.devnied.emvnfccard.model.enums.ApplicationStepEnum;

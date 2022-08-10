@@ -30,10 +30,10 @@ import android.widget.Toast;
 
 import com.github.devnied.emvnfccard.enums.EmvCardScheme;
 import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
-import com.github.devnied.emvnfccard.model.Afl;
 import com.github.devnied.emvnfccard.model.Application;
 import com.github.devnied.emvnfccard.model.EmvCard;
 
+import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAnalyze;
 
@@ -694,7 +694,6 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     private void writeModelToUri(Uri uri, EmvCardAids emvCardAids) throws IOException {
         OutputStream outputStream = null;
         try {
-            // Creating a file stream that points to an internal storage file.
             outputStream = contextSave.getContentResolver().openOutputStream(uri);
             // Wrapping our file stream.
             ObjectOutputStream oos = new ObjectOutputStream(outputStream);
@@ -742,6 +741,16 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
                 //startActivity(i);
                 exportModelFile();
+                return false;
+            }
+        });
+
+        MenuItem mImportModelFile = menu.findItem(R.id.action_import_model_file);
+        mImportModelFile.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, ImportModelFileActivity.class);
+                startActivity(i);
                 return false;
             }
         });

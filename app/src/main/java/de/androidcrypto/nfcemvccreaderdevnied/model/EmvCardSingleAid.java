@@ -1,9 +1,6 @@
 package de.androidcrypto.nfcemvccreaderdevnied.model;
 
-import com.github.devnied.emvnfccard.model.Afl;
-
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 
 public class EmvCardSingleAid implements Serializable {
@@ -354,7 +351,7 @@ public class EmvCardSingleAid implements Serializable {
     }
 
 
-    public List<Afl> getAfls() {
+    public List<de.androidcrypto.nfcemvccreaderdevnied.model.Afl> getAfls() {
         return afls;
     }
 
