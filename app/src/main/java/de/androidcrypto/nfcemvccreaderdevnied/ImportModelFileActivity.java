@@ -17,6 +17,8 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -32,7 +34,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
+import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import fr.devnied.bitlib.BytesUtils;
 
 public class ImportModelFileActivity extends AppCompatActivity {
@@ -62,6 +66,104 @@ public class ImportModelFileActivity extends AppCompatActivity {
             }
         });
     }
+
+    // this method is called from fileLoaderActivityResultLauncher
+    public void analyzeData() {
+        // when this method is called a model file was loaded into emvCardAids;
+        List<EmvCardSingleAid> emvCardSingleAids = new ArrayList<EmvCardSingleAid>();
+        List<byte[]> aids = new ArrayList<byte[]>();
+        EmvCardSingleAid emvCardSingleAid; // takes the data flow for a selected aid
+        byte[] selectedAid;
+        String content = "Analyzing the model file";
+        aids = emvCardAids.getAids();
+        emvCardSingleAids = emvCardAids.getEmvCardSingleAids();
+        int aidsSize = aids.size();
+        content = content + "\n" + "The model contains data for " + aidsSize + " aids\n";
+        for (int i = 0; i < aidsSize; i++) {
+            selectedAid = aids.get(i);
+            emvCardSingleAid = emvCardSingleAids.get(i);
+            content = content + "\n" + "aid nr " + (i + 1) + " : " + BytesUtils.bytesToString(selectedAid);
+
+            content = content + "\n" + "step 01: select PPSE";
+            content = content + "\n" + "apduSelectPpseCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPpseCommand());
+            content = content + "\n" + "apduSelectPpseResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPpseResponse());
+            content = content + "\n" + "apduSelectPpseParsed:\n" + emvCardSingleAid.getApduSelectPpseParsed();
+            content = content + "\n" + "------------------------\n";
+
+            content = content + "\n" + "step 02: take one AID";
+            content = content + "\n" + "selectedAid: " + BytesUtils.bytesToString(selectedAid);
+            content = content + "\n" + "------------------------\n";
+
+            content = content + "\n" + "step 03: select AID";
+            content = content + "\n" + "apduSelectPidCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidCommand());
+            content = content + "\n" + "apduSelectPidResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidResponse());
+            content = content + "\n" + "apduSelectPidParsed:\n" + emvCardSingleAid.getApduSelectPidParsed();
+            content = content + "\n" + "------------------------\n";
+
+            content = content + "\n" + "step 04: get Processing Options (PDOL)";
+            content = content + "\n" + "apduGetProcessingOptionsCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsCommand());
+            content = content + "\n" + "apduGetProcessingOptionsResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsResponse());
+            content = content + "\n" + "apduGetProcessingOptionsParsed:\n" + emvCardSingleAid.getApduGetProcessingOptionsParsed();
+            content = content + "\n" + "apduGetProcessingOptionsSucceed: " + emvCardSingleAid.isGetProcessingOptionsSucceed();
+            if (!emvCardSingleAid.isGetProcessingOptionsSucceed()) {
+                // this seems to be a VISA card that provides no AFL data - we need to use another PDOL command
+                content = content + "\n" + "The card seems to be VISA card that dows not provide an AFL";
+                content = content + "\n" + "apduGetProcessingOptionsVisaCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaCommand());
+                content = content + "\n" + "apduGetProcessingOptionsVisaResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaResponse());
+                content = content + "\n" + "apduGetProcessingOptionsVisaParsed:\n" + emvCardSingleAid.getApduGetProcessingOptionsVisaParsed();
+                content = content + "\n" + "apduGetProcessingOptionsVisaSucceed: " + emvCardSingleAid.isGetProcessingOptionsVisaSucceed();
+            }
+            content = content + "\n" + "------------------------\n";
+
+            content = content + "\n" + "step 05: parse PDOL and GPO";
+            content = content + "\n" + "MessageTemplate1Response: " + BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate1());
+            content = content + "\n" + "MessageTemplate1Parsed:\n" + emvCardSingleAid.getResponseMessageTemplate1Parsed();
+            content = content + "\n" + "MessageTemplate2Response: " + BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate2());
+            content = content + "\n" + "MessageTemplate2Parsed:\n" + emvCardSingleAid.getResponseMessageTemplate2Parsed();
+            content = content + "\n" + "applicationFileLocatorResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApplicationFileLocator());
+            content = content + "\n" + "applicationFileLocatorParsed:\n" + emvCardSingleAid.getApplicationFileLocatorParsed();
+            content = content + "\n" + "------------------------\n";
+
+            content = content + "\n" + "step 06: read records from AFL";
+            List<Afl> afls;
+            Afl afl;
+            List<byte[]> apduReadRecordsCommand = emvCardSingleAid.getApduReadRecordsCommand();
+            List<byte[]> apduReadRecordsResponse = emvCardSingleAid.getApduReadRecordsResponse();
+            List<String> apduReadRecordsResponseParsed = emvCardSingleAid.getApduReadRecordsResponseParsed();
+            //afls = emvCardSingleAid.getAfls();
+            //int aflsSize = afls.size();
+            int apduReadRecordsCommandSize = apduReadRecordsCommand.size();
+            content = content + "\n" + "we do have " + apduReadRecordsCommandSize + " entries to read\n";
+            for (int j = 0; j < apduReadRecordsCommandSize; j++) {
+                content = content + "\n" + "get data from record " + (j + 1);
+                byte[] apduReadRecordCommand = apduReadRecordsCommand.get(j);
+                byte[] apduReadRecordResponse = apduReadRecordsResponse.get(j);
+                String apduReadRecordResponseParsed = apduReadRecordsResponseParsed.get(j);
+                content = content + "\n" + "apduReadRecordCommand:  " + BytesUtils.bytesToString(apduReadRecordCommand);
+                content = content + "\n" + "apduReadRecordResponse: " + BytesUtils.bytesToString(apduReadRecordResponse);
+                content = content + "\n" + "apduReadRecordParsed:\n" + apduReadRecordResponseParsed;
+                content = content + "\n" + "------------------------\n";
+            }
+            content = content + "\n" + "";
+            content = content + "\n" + "------------------------\n";
+        }
+
+
+
+
+
+        content = content + "\n" + "";
+        content = content + "\n" + "------------------------\n";
+        content = content + "\n" + "";
+        content = content + "\n" + "";
+        content = content + "\n" + "";
+        content = content + "\n" + "";
+        content = content + "\n" + "";
+
+
+        readResult.setText(content);
+    }
+
 
 
     private void verifyPermissionsReadModel() {
@@ -113,11 +215,8 @@ public class ImportModelFileActivity extends AppCompatActivity {
                                 for (int i = 0; i < aidsSize; i++) {
                                     message = message + "\n" + "aid " + i + " is " + BytesUtils.bytesToString(aids.get(i));
                                 }
-                                //message = message + "\n" + "";
-                                //message = message + "\n" + "";
                                 readResult.setText(message);
-                                // get metadata from uri
-                                //dumpImageMetaData(uri);
+                                analyzeData();
                             } catch (IOException e) {
                                 e.printStackTrace();
                                 readResult.setText("ERROR: " + e.toString());
@@ -127,21 +226,6 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     }
                 }
             });
-
-    private String readTextFromUri(Uri uri) throws IOException {
-        StringBuilder stringBuilder = new StringBuilder();
-        //try (InputStream inputStream = getContentResolver().openInputStream(uri);
-        // achtung: context1 muss gefüllt sein !
-        try (InputStream inputStream = contextSave.getContentResolver().openInputStream(uri);
-             BufferedReader reader = new BufferedReader(
-                     new InputStreamReader(Objects.requireNonNull(inputStream)))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                stringBuilder.append(line + "\n");
-            }
-        }
-        return stringBuilder.toString();
-    }
 
     private EmvCardAids readModelFromUri(Uri uri) throws IOException {
         InputStream inputStream = null;
@@ -158,5 +242,66 @@ public class ImportModelFileActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         return emvCardAidsImport;
+    }
+
+
+    // todo use a smaller menu - no export / import of a model file
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_activity_main, menu);
+
+        MenuItem mExportMail = menu.findItem(R.id.action_export_mail);
+        mExportMail.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
+                //startActivity(i);
+                //exportDumpMail();
+                return false;
+            }
+        });
+
+        MenuItem mExportFile = menu.findItem(R.id.action_export_file);
+        mExportFile.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
+                //startActivity(i);
+                //exportDumpFile();
+                return false;
+            }
+        });
+
+        MenuItem mExportModelFile = menu.findItem(R.id.action_export_model_file);
+        mExportModelFile.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
+                //startActivity(i);
+                //exportModelFile();
+                return false;
+            }
+        });
+
+        MenuItem mImportModelFile = menu.findItem(R.id.action_import_model_file);
+        mImportModelFile.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //Intent i = new Intent(MainActivity.this, ImportModelFileActivity.class);
+                //startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mClearDump = menu.findItem(R.id.action_clear_dump);
+        mClearDump.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //dumpExportString = "";
+                readResult.setText("read result");
+                return false;
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
     }
 }
