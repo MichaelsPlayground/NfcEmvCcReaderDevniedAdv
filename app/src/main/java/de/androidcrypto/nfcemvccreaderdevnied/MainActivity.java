@@ -42,7 +42,10 @@ import com.github.devnied.emvnfccard.parser.EmvTemplate;
 import com.github.devnied.emvnfccard.utils.ResponseUtils;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -224,6 +227,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             emvCardAids.setAids(aids);
             emvCardAids.setEmvCardSingleAids(emvCardSingleAids);
 
+            dumpExportString = idContentString;
 
 
 
@@ -457,8 +461,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         }
 
     }
-
-
+    
     public static String prettyPrintCardNumber(String cardNumber) {
         if (cardNumber == null) return null;
         char delimiter = ' ';
@@ -617,23 +620,23 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
     // https://stackoverflow.com/questions/2139134/how-to-send-an-object-from-one-android-activity-to-another-using-intents
 
-    private void XexportDumpFile() {
-        if (dumpExportString.isEmpty()) {
+    private void exportModelFile() {
+        if (emvCardAids == null) {
             writeToUiToast("Scan a tag first before writing files :-)");
             return;
         }
-        XverifyPermissionsWriteString();
+        verifyPermissionsWriteModel();
     }
 
     // section external storage permission check
-    private void XverifyPermissionsWriteString() {
+    private void verifyPermissionsWriteModel() {
         String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE};
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
                 permissions[0]) == PackageManager.PERMISSION_GRANTED
                 && ContextCompat.checkSelfPermission(this.getApplicationContext(),
                 permissions[1]) == PackageManager.PERMISSION_GRANTED) {
-            XwriteStringToExternalSharedStorage();
+            writeModelToExternalSharedStorage();
         } else {
             ActivityCompat.requestPermissions(this,
                     permissions,
@@ -641,7 +644,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         }
     }
 
-    private void XwriteStringToExternalSharedStorage() {
+    private void writeModelToExternalSharedStorage() {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
@@ -649,18 +652,19 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         // system file picker when it loads.
         //boolean pickerInitialUri = false;
         //intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri);
-        // get filename from edittext
-        String filename = tagTypeString + "_" + tagIdString + ".txt";
+        // todo find a better suited filename appLabel ?
+        String filename = "emv.txt";
+        //String filename = tagTypeString + "_" + tagIdString + ".txt";
         // sanity check
         if (filename.equals("")) {
             writeToUiToast("scan a tag before writing the content to a file :-)");
             return;
         }
         intent.putExtra(Intent.EXTRA_TITLE, filename);
-        XfileSaverActivityResultLauncher.launch(intent);
+        modelFileSaverActivityResultLauncher.launch(intent);
     }
 
-    ActivityResultLauncher<Intent> XfileSaverActivityResultLauncher = registerForActivityResult(
+    ActivityResultLauncher<Intent> modelFileSaverActivityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
                 @Override
@@ -675,10 +679,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                             uri = resultData.getData();
                             // Perform operations on the document using its URI.
                             try {
-                                // get file content from edittext
-                                String fileContent = dumpExportString;
-                                XwriteTextToUri(uri, fileContent);
-                                String message = "file written to external shared storage: " + uri.toString();
+                                writeModelToUri(uri, emvCardAids);
                                 writeToUiToast("file written to external shared storage: " + uri.toString());
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -690,13 +691,19 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 }
             });
 
-    private void XwriteTextToUri(Uri uri, String data) throws IOException {
+    private void writeModelToUri(Uri uri, EmvCardAids emvCardAids) throws IOException {
+        OutputStream outputStream = null;
         try {
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(contextSave.getContentResolver().openOutputStream(uri));
-            outputStreamWriter.write(data);
-            outputStreamWriter.close();
-        } catch (IOException e) {
-            System.out.println("Exception File write failed: " + e.toString());
+            // Creating a file stream that points to an internal storage file.
+            outputStream = contextSave.getContentResolver().openOutputStream(uri);
+            // Wrapping our file stream.
+            ObjectOutputStream oos = new ObjectOutputStream(outputStream);
+            // Writing the serializable object to the file
+            oos.writeObject(emvCardAids);
+            // Closing our object stream which also closes the wrapped stream.
+            oos.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -734,7 +741,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             public boolean onMenuItemClick(MenuItem item) {
                 //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
                 //startActivity(i);
-                //exportDumpFile();
+                exportModelFile();
                 return false;
             }
         });
