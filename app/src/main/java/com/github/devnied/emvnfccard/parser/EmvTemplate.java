@@ -30,6 +30,8 @@ import com.github.devnied.emvnfccard.model.EmvCard;
 import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAnalyze;
 
+import com.github.devnied.emvnfccard.model.EmvTrack1;
+import com.github.devnied.emvnfccard.model.EmvTrack2;
 import com.github.devnied.emvnfccard.model.enums.ApplicationStepEnum;
 import com.github.devnied.emvnfccard.model.enums.CardStateEnum;
 import com.github.devnied.emvnfccard.parser.impl.EmvParser;
@@ -726,6 +728,8 @@ public class EmvTemplate {
 		byte data[] = TlvUtil.getValue(pGpo, EmvTags.RESPONSE_MESSAGE_TEMPLATE_1);
 		if (data != null) {
 			System.out.println("*#* extractCommonsCardData try to find RESPONSE_MESSAGE_TEMPLATE_1 found");
+			System.out.println("*#* RESPONSE_MESSAGE_TEMPLATE_1: " + BytesUtils.bytesToString(data));
+			System.out.println("*#* RESPONSE_MESSAGE_TEMPLATE_1\n" + TlvUtil.prettyPrintAPDUResponse(data));
 			emvCardSingleAid.setResponseMessageTemplate1(data);
 			emvCardSingleAid.setResponseMessageTemplate1Parsed(TlvUtil.prettyPrintAPDUResponse(data));
 			data = ArrayUtils.subarray(data, 2, data.length);
@@ -733,12 +737,15 @@ public class EmvTemplate {
 			System.out.println("*#* extractCommonsCardData try to find RESPONSE_MESSAGE_TEMPLATE_2");
 			ret = extractTrackData(card, pGpo);
 			if (!ret) {
+				System.out.println("*#* RESPONSE_MESSAGE_TEMPLATE_2: " + BytesUtils.bytesToString(pGpo));
+				System.out.println("*#* RESPONSE_MESSAGE_TEMPLATE_2\n" + TlvUtil.prettyPrintAPDUResponse(pGpo));
 				//emvCardSingleAid.setResponseMessageTemplate1(data);
 				//emvCardSingleAid.setResponseMessageTemplate1Parsed(TlvUtil.prettyPrintAPDUResponse(data));
 				data = TlvUtil.getValue(pGpo, EmvTags.APPLICATION_FILE_LOCATOR);
 				emvCardSingleAid.setApplicationFileLocator(data);
 				//emvCardSingleAid.setApplicationFileLocatorParsed(TlvUtil.prettyPrintAPDUResponse(data));
 				System.out.println("*#* extractCommonsCardData APPLICATION_FILE_LOCATOR data: " + BytesUtils.bytesToString(data));
+				System.out.println("*#* extractCommonsCardData APPLICATION_FILE_LOCATOR\n" + TlvUtil.prettyPrintAPDUResponse(data));
 			} else {
 				// todo anything else to read
 				//extractCardHolderName(pGpo);
@@ -761,6 +768,7 @@ public class EmvTemplate {
 					byte[] apduReadRecordResponse = provider.transceive(apduReadRecordCommand);
 					System.out.println("#*# apduReadRecordCommand: " + BytesUtils.bytesToString(apduReadRecordCommand));
 					System.out.println("#*# apduReadRecordResponse: " + BytesUtils.bytesToString(apduReadRecordResponse));
+					System.out.println("#*# apduReadRecordResponse\n" + TlvUtil.prettyPrintAPDUResponse(apduReadRecordResponse));
 					apduReadRecordsCommand.add(apduReadRecordCommand);
 					apduReadRecordsResponse.add(apduReadRecordResponse);
 					apduReadRecordsParsed.add(TlvUtil.prettyPrintAPDUResponse(apduReadRecordResponse));
@@ -822,6 +830,11 @@ public class EmvTemplate {
 	 */
 	protected boolean extractTrackData(final EmvCard pEmvCard, final byte[] pData) {
 		// todo should we read the data ?
+
+		EmvTrack1 emvTrack1 = TrackUtils.extractTrack1Data(TlvUtil.getValue(pData, EmvTags.TRACK1_DATA));
+		EmvTrack2 emvTrack2 = TrackUtils.extractTrack2EquivalentData(TlvUtil.getValue(pData, EmvTags.TRACK_2_EQV_DATA, EmvTags.TRACK2_DATA));
+
+
 		/*
 		template.get().getCard().setTrack1(TrackUtils.extractTrack1Data(TlvUtil.getValue(pData, EmvTags.TRACK1_DATA)));
 		template.get().getCard().setTrack2(TrackUtils.extractTrack2EquivalentData(TlvUtil.getValue(pData, EmvTags.TRACK_2_EQV_DATA, EmvTags.TRACK2_DATA)));

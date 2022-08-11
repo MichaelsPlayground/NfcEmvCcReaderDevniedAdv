@@ -741,3 +741,23 @@ Thanks @Gaurav_Orai It worked fine!!! Thanks also to Arjun for the answer, the t
 Valerio Colonnese
 May 2, 2018 at 16:00
 Add a comment
+
+Cryptograms:
+
+https://neapay.com/online-tools/calculate-cryptogram.html
+
+https://atlassian.idtechproducts.com/confluence/display/KB/Cryptogram+and+EMV+Transaction+Flow
+
+https://www.tokenex.com/blog/ab-what-is-a-cryptogram-on-a-credit-card
+
+https://stackoverflow.com/questions/63547124/unable-to-generate-application-cryptogram
+
+https://stackoverflow.com/questions/52312299/payment-application-emv
+
+https://stackoverflow.com/questions/51361097/explain-emv-mdk-keys-enc-mac-ac/51363994#51363994
+
+https://stackoverflow.com/questions/31610533/unable-to-generate-correct-application-cryptogram
+
+https://ldapwiki.com/wiki/EMV%20Terms
+
+https://neapay.com/online-tools/emv-chip-terms-definitions.html
