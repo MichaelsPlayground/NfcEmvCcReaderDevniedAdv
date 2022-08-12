@@ -153,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 idContentString = idContentString + "\n" + "\n" + "aid nr: " + i + " AID: " + BytesUtils.bytesToString(selectedAid);
                 // we store the data in a fresh/unused model
                 emvCardSingleAid = new EmvCardSingleAid();
-                // to get best results we start the complete reading from the beginning
+                // to get best results we start the complete reading from the beginning with Ppse select command
                 byte[] selectPpseResponse = parser.selectPpse(emvCardSingleAid);
                 idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(selectPpseResponse);
                 // store the cleartext parsed response
@@ -218,6 +218,48 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 } else {
                     idContentString = idContentString + "\n" + "AFL data not available";
                 }
+
+                // new to read the ATC and other data
+                byte[] getDataResponse = parser.getDataAtc();
+                idContentString = idContentString + "\n" + "getDataResponse for ATC";
+                if (getDataResponse != null) {
+                    idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
+                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
+
+                } else {
+                    idContentString = idContentString + "\n" + "getData is not successfull";
+                }
+
+                getDataResponse = parser.getDataLastOnlineAtc();
+                idContentString = idContentString + "\n" + "getDataResponse for LastOnlineAtc";
+                if (getDataResponse != null) {
+                    idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
+                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
+
+                } else {
+                    idContentString = idContentString + "\n" + "getData is not successfull";
+                }
+
+                getDataResponse = parser.getDataPinTryCounter();
+                idContentString = idContentString + "\n" + "getDataResponse for PinTryCounter";
+                if (getDataResponse != null) {
+                    idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
+                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
+
+                } else {
+                    idContentString = idContentString + "\n" + "getData is not successfull";
+                }
+
+                getDataResponse = parser.getDataLogFormat();
+                idContentString = idContentString + "\n" + "getDataResponse for LogFormat";
+                if (getDataResponse != null) {
+                    idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
+                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
+
+                } else {
+                    idContentString = idContentString + "\n" + "getData is not successfull";
+                }
+
 
                 // store the emvCardSingleAid in the "all" model
                 aids.add(selectedAid);

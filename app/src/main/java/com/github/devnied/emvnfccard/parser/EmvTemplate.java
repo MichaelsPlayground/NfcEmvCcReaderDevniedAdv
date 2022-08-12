@@ -18,6 +18,8 @@ package com.github.devnied.emvnfccard.parser;
 import com.github.devnied.emvnfccard.enums.CommandEnum;
 import com.github.devnied.emvnfccard.enums.EmvCardScheme;
 import com.github.devnied.emvnfccard.enums.SwEnum;
+import com.github.devnied.emvnfccard.enums.TagTypeEnum;
+import com.github.devnied.emvnfccard.enums.TagValueTypeEnum;
 import com.github.devnied.emvnfccard.exception.CommunicationException;
 import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
 import com.github.devnied.emvnfccard.iso7816emv.ITerminal;
@@ -427,7 +429,6 @@ public class EmvTemplate {
 		}
 	}
 
-
 	/**
 	 * Read EMV card with Payment System Environment or Proximity Payment System
 	 * Environment
@@ -451,8 +452,6 @@ public class EmvTemplate {
 
 		/*
 		if (ResponseUtils.isSucceed(apduSelectPidResponse)) {
-
-
 
 			// Parse FCI Template
 			// step 2 parse the File Control Information (FCI) Template
@@ -489,10 +488,6 @@ public class EmvTemplate {
 
 		 */
 	}
-
-
-
-
 
 	// this method is copied and adopted from EmvParser.java
 	/**
@@ -744,8 +739,12 @@ public class EmvTemplate {
 				data = TlvUtil.getValue(pGpo, EmvTags.APPLICATION_FILE_LOCATOR);
 				emvCardSingleAid.setApplicationFileLocator(data);
 				//emvCardSingleAid.setApplicationFileLocatorParsed(TlvUtil.prettyPrintAPDUResponse(data));
-				System.out.println("*#* extractCommonsCardData APPLICATION_FILE_LOCATOR data: " + BytesUtils.bytesToString(data));
-				System.out.println("*#* extractCommonsCardData APPLICATION_FILE_LOCATOR\n" + TlvUtil.prettyPrintAPDUResponse(data));
+				if (data != null) {
+					System.out.println("*#* extractCommonsCardData APPLICATION_FILE_LOCATOR data: " + BytesUtils.bytesToString(data));
+					System.out.println("*#* extractCommonsCardData APPLICATION_FILE_LOCATOR\n" + TlvUtil.prettyPrintAPDUResponse(data));
+				} else {
+					System.out.println("*#* extractCommonsCardData APPLICATION_FILE_LOCATOR is not available");
+				}
 			} else {
 				// todo anything else to read
 				//extractCardHolderName(pGpo);
@@ -843,6 +842,46 @@ public class EmvTemplate {
 		return false;
 	}
 
+
+	public byte[] getDataAtc() throws CommunicationException {
+		byte[] apduGetDataCommand = new CommandApdu(CommandEnum.GET_DATA, 0x9F, 0x36, null, 0).toBytes();
+		byte[] apduGetDataResponse = provider.transceive(apduGetDataCommand);
+		System.out.println("#*# apduGetDataCommand for ATC");
+		System.out.println("#*# apduGetDataCommand: " + BytesUtils.bytesToString(apduGetDataCommand));
+		System.out.println("#*# apduGetDataResponse: " + BytesUtils.bytesToString(apduGetDataResponse));
+		System.out.println("#*# apduGetDataResponse\n" + TlvUtil.prettyPrintAPDUResponse(apduGetDataResponse));
+		return apduGetDataResponse;
+	}
+
+	public byte[] getDataLastOnlineAtc() throws CommunicationException {
+		byte[] apduGetDataCommand = new CommandApdu(CommandEnum.GET_DATA, 0x9F, 0x13, null, 0).toBytes();
+		byte[] apduGetDataResponse = provider.transceive(apduGetDataCommand);
+		System.out.println("#*# apduGetDataCommand for Last Online ATC");
+		System.out.println("#*# apduGetDataCommand: " + BytesUtils.bytesToString(apduGetDataCommand));
+		System.out.println("#*# apduGetDataResponse: " + BytesUtils.bytesToString(apduGetDataResponse));
+		System.out.println("#*# apduGetDataAtcResponse\n" + TlvUtil.prettyPrintAPDUResponse(apduGetDataResponse));
+		return apduGetDataResponse;
+	}
+
+	public byte[] getDataPinTryCounter() throws CommunicationException {
+		byte[] apduGetDataCommand = new CommandApdu(CommandEnum.GET_DATA, 0x9F, 0x17, null, 0).toBytes();
+		byte[] apduGetDataResponse = provider.transceive(apduGetDataCommand);
+		System.out.println("#*# apduGetDataCommand for Pin Try Counter");
+		System.out.println("#*# apduGetDataCommand: " + BytesUtils.bytesToString(apduGetDataCommand));
+		System.out.println("#*# apduGetDataResponse: " + BytesUtils.bytesToString(apduGetDataResponse));
+		System.out.println("#*# apduGetDataAtcResponse\n" + TlvUtil.prettyPrintAPDUResponse(apduGetDataResponse));
+		return apduGetDataResponse;
+	}
+
+	public byte[] getDataLogFormat() throws CommunicationException {
+		byte[] apduGetDataCommand = new CommandApdu(CommandEnum.GET_DATA, 0x9F, 0x4F, null, 0).toBytes();
+		byte[] apduGetDataResponse = provider.transceive(apduGetDataCommand);
+		System.out.println("#*# apduGetDataCommand for LogFormat");
+		System.out.println("#*# apduGetDataCommand: " + BytesUtils.bytesToString(apduGetDataCommand));
+		System.out.println("#*# apduGetDataResponse: " + BytesUtils.bytesToString(apduGetDataResponse));
+		System.out.println("#*# apduGetDataAtcResponse\n" + TlvUtil.prettyPrintAPDUResponse(apduGetDataResponse));
+		return apduGetDataResponse;
+	}
 
 	/**
 	 *
