@@ -23,6 +23,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.android.material.switchmaterial.SwitchMaterial;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +45,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
 
     Context contextSave;
     TextView readResult;
+    SwitchMaterial addCommandResponseData;
     EmvCardAids emvCardAids;
     List<byte[]> aids = new ArrayList<byte[]>();
 
@@ -57,6 +60,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
         setSupportActionBar(myToolbar);
         contextSave = getApplicationContext();
         readResult = findViewById(R.id.tvImportReadResult);
+        addCommandResponseData = findViewById(R.id.swImportAddCommandResponseDataSwitch);
 
         Button btnImport = findViewById(R.id.btnImportFile);
         btnImport.setOnClickListener(new View.OnClickListener() {
@@ -70,6 +74,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
     // this method is called from fileLoaderActivityResultLauncher
     public void analyzeData() {
         // when this method is called a model file was loaded into emvCardAids;
+        boolean isAddCommandResponseData = addCommandResponseData.isChecked();
         List<EmvCardSingleAid> emvCardSingleAids = new ArrayList<EmvCardSingleAid>();
         List<byte[]> aids = new ArrayList<byte[]>();
         EmvCardSingleAid emvCardSingleAid; // takes the data flow for a selected aid
@@ -85,8 +90,10 @@ public class ImportModelFileActivity extends AppCompatActivity {
             content = content + "\n" + "aid nr " + (i + 1) + " : " + BytesUtils.bytesToString(selectedAid);
 
             content = content + "\n" + "step 01: select PPSE";
-            content = content + "\n" + "apduSelectPpseCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPpseCommand());
-            content = content + "\n" + "apduSelectPpseResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPpseResponse());
+            if (isAddCommandResponseData) {
+                content = content + "\n" + "apduSelectPpseCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPpseCommand());
+                content = content + "\n" + "apduSelectPpseResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPpseResponse());
+            }
             content = content + "\n" + "apduSelectPpseParsed:\n" + emvCardSingleAid.getApduSelectPpseParsed();
             content = content + "\n" + "------------------------\n";
 
@@ -95,61 +102,76 @@ public class ImportModelFileActivity extends AppCompatActivity {
             content = content + "\n" + "------------------------\n";
 
             content = content + "\n" + "step 03: select AID";
-            content = content + "\n" + "apduSelectPidCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidCommand());
-            content = content + "\n" + "apduSelectPidResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidResponse());
+            if (isAddCommandResponseData) {
+                content = content + "\n" + "apduSelectPidCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidCommand());
+                content = content + "\n" + "apduSelectPidResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidResponse());
+            }
             content = content + "\n" + "apduSelectPidParsed:\n" + emvCardSingleAid.getApduSelectPidParsed();
             content = content + "\n" + "------------------------\n";
 
             content = content + "\n" + "step 04: get Processing Options (PDOL)";
-            content = content + "\n" + "apduGetProcessingOptionsCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsCommand());
-            content = content + "\n" + "apduGetProcessingOptionsResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsResponse());
+            if (isAddCommandResponseData) {
+                content = content + "\n" + "apduGetProcessingOptionsCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsCommand());
+                content = content + "\n" + "apduGetProcessingOptionsResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsResponse());
+            }
             content = content + "\n" + "apduGetProcessingOptionsParsed:\n" + emvCardSingleAid.getApduGetProcessingOptionsParsed();
             content = content + "\n" + "apduGetProcessingOptionsSucceed: " + emvCardSingleAid.isGetProcessingOptionsSucceed();
             if (!emvCardSingleAid.isGetProcessingOptionsSucceed()) {
                 // this seems to be a VISA card that provides no AFL data - we need to use another PDOL command
                 content = content + "\n" + "The card seems to be VISA card that dows not provide an AFL";
-                content = content + "\n" + "apduGetProcessingOptionsVisaCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaCommand());
-                content = content + "\n" + "apduGetProcessingOptionsVisaResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaResponse());
+                if (isAddCommandResponseData) {
+                    content = content + "\n" + "apduGetProcessingOptionsVisaCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaCommand());
+                    content = content + "\n" + "apduGetProcessingOptionsVisaResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaResponse());
+                }
                 content = content + "\n" + "apduGetProcessingOptionsVisaParsed:\n" + emvCardSingleAid.getApduGetProcessingOptionsVisaParsed();
                 content = content + "\n" + "apduGetProcessingOptionsVisaSucceed: " + emvCardSingleAid.isGetProcessingOptionsVisaSucceed();
             }
             content = content + "\n" + "------------------------\n";
 
             content = content + "\n" + "step 05: parse PDOL and GPO";
-            content = content + "\n" + "MessageTemplate1Response: " + BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate1());
+            if (isAddCommandResponseData) {
+                content = content + "\n" + "MessageTemplate1Response: " + BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate1());
+            }
             content = content + "\n" + "MessageTemplate1Parsed:\n" + emvCardSingleAid.getResponseMessageTemplate1Parsed();
-            content = content + "\n" + "MessageTemplate2Response: " + BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate2());
+            if (isAddCommandResponseData) {
+                content = content + "\n" + "MessageTemplate2Response: " + BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate2());
+            }
             content = content + "\n" + "MessageTemplate2Parsed:\n" + emvCardSingleAid.getResponseMessageTemplate2Parsed();
-            content = content + "\n" + "applicationFileLocatorResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApplicationFileLocator());
+            if (isAddCommandResponseData) {
+                content = content + "\n" + "applicationFileLocatorResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApplicationFileLocator());
+            }
             content = content + "\n" + "applicationFileLocatorParsed:\n" + emvCardSingleAid.getApplicationFileLocatorParsed();
             content = content + "\n" + "------------------------\n";
 
             content = content + "\n" + "step 06: read records from AFL";
             List<Afl> afls;
             Afl afl;
-            List<byte[]> apduReadRecordsCommand = emvCardSingleAid.getApduReadRecordsCommand();
-            List<byte[]> apduReadRecordsResponse = emvCardSingleAid.getApduReadRecordsResponse();
-            List<String> apduReadRecordsResponseParsed = emvCardSingleAid.getApduReadRecordsResponseParsed();
-            //afls = emvCardSingleAid.getAfls();
-            //int aflsSize = afls.size();
-            int apduReadRecordsCommandSize = apduReadRecordsCommand.size();
-            content = content + "\n" + "we do have " + apduReadRecordsCommandSize + " entries to read\n";
-            for (int j = 0; j < apduReadRecordsCommandSize; j++) {
-                content = content + "\n" + "get data from record " + (j + 1);
-                byte[] apduReadRecordCommand = apduReadRecordsCommand.get(j);
-                byte[] apduReadRecordResponse = apduReadRecordsResponse.get(j);
-                String apduReadRecordResponseParsed = apduReadRecordsResponseParsed.get(j);
-                content = content + "\n" + "apduReadRecordCommand:  " + BytesUtils.bytesToString(apduReadRecordCommand);
-                content = content + "\n" + "apduReadRecordResponse: " + BytesUtils.bytesToString(apduReadRecordResponse);
-                content = content + "\n" + "apduReadRecordParsed:\n" + apduReadRecordResponseParsed;
-                content = content + "\n" + "------------------------\n";
+                List<byte[]> apduReadRecordsCommand = emvCardSingleAid.getApduReadRecordsCommand();
+                List<byte[]> apduReadRecordsResponse = emvCardSingleAid.getApduReadRecordsResponse();
+                List<String> apduReadRecordsResponseParsed = emvCardSingleAid.getApduReadRecordsResponseParsed();
+                //afls = emvCardSingleAid.getAfls();
+                //int aflsSize = afls.size();
+            if (apduReadRecordsCommand != null) {
+                int apduReadRecordsCommandSize = apduReadRecordsCommand.size();
+                content = content + "\n" + "we do have " + apduReadRecordsCommandSize + " entries to read\n";
+                for (int j = 0; j < apduReadRecordsCommandSize; j++) {
+                    content = content + "\n" + "get data from record " + (j + 1);
+                    if (isAddCommandResponseData) {
+                        byte[] apduReadRecordCommand = apduReadRecordsCommand.get(j);
+                        byte[] apduReadRecordResponse = apduReadRecordsResponse.get(j);
+                        content = content + "\n" + "apduReadRecordCommand:  " + BytesUtils.bytesToString(apduReadRecordCommand);
+                        content = content + "\n" + "apduReadRecordResponse: " + BytesUtils.bytesToString(apduReadRecordResponse);
+                    }
+                    String apduReadRecordResponseParsed = apduReadRecordsResponseParsed.get(j);
+                    content = content + "\n" + "apduReadRecordParsed:\n" + apduReadRecordResponseParsed;
+                    content = content + "\n" + "------------------------\n";
+                }
+            } else {
+                content = content + "\n" + "There is no AFL record available";
             }
             content = content + "\n" + "";
             content = content + "\n" + "------------------------\n";
         }
-
-
-
 
 
         content = content + "\n" + "";
@@ -163,7 +185,6 @@ public class ImportModelFileActivity extends AppCompatActivity {
 
         readResult.setText(content);
     }
-
 
 
     private void verifyPermissionsReadModel() {
