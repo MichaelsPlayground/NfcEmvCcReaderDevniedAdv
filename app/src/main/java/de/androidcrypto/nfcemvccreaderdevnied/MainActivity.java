@@ -219,7 +219,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     idContentString = idContentString + "\n" + "AFL data not available";
                 }
 
-                // new to read the ATC and other data
+                // read the ATC and other data
+                // todo save ATC & other data to EmvCardSingleAid
                 byte[] getDataResponse = parser.getDataAtc();
                 idContentString = idContentString + "\n" + "getDataResponse for ATC";
                 if (getDataResponse != null) {
@@ -227,7 +228,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
 
                 } else {
-                    idContentString = idContentString + "\n" + "getData is not successfull";
+                    idContentString = idContentString + "\n" + "getData for ATC is not successfull";
                 }
 
                 getDataResponse = parser.getDataLastOnlineAtc();
@@ -237,7 +238,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
 
                 } else {
-                    idContentString = idContentString + "\n" + "getData is not successfull";
+                    idContentString = idContentString + "\n" + "getData for LastOnlineAtc is not successfull";
                 }
 
                 getDataResponse = parser.getDataPinTryCounter();
@@ -247,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
 
                 } else {
-                    idContentString = idContentString + "\n" + "getData is not successfull";
+                    idContentString = idContentString + "\n" + "getData for PinTryCounter is not successfull";
                 }
 
                 getDataResponse = parser.getDataLogFormat();
@@ -259,6 +260,22 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 } else {
                     idContentString = idContentString + "\n" + "getData is not successfull";
                 }
+
+                // log entry
+                // public static final ITag LOG_ENTRY = new TagImpl("9f4d", TagValueTypeEnum.BINARY, "Log Entry", "Provides the SFI of the Transaction Log file and its number of records");
+                //	public static final ITag MERCHANT_NAME_AND_LOCATION = new TagImpl("9f4e", TagValueTypeEnum.TEXT, "Merchant Name and Location", "Indicates the name and location of the merchant");
+                //	public static final ITag LOG_FORMAT = new TagImpl("9f4f", TagValueTypeEnum.DOL, "Log Format", "List (in tag and length format) of data objects representing the logged data elements that are passed to the terminal when a transaction log record is read");
+                //	public static final ITag FCI_ISSUER_DISCRETIONARY_DATA = new TagImpl("bf0c", TagValueTypeEnum.BINARY, "File Control Information (FCI) Issuer Discretionary Data", "Issuer discretionary part of the FCI (e.g. O/S Manufacturer proprietary data)");
+                //	public static final ITag VISA_LOG_ENTRY = new TagImpl("df60", TagValueTypeEnum.BINARY, "VISA Log Entry", "");
+
+                // lloyds MC: after selectPid in File Control Information (FCI) Template
+                // BF 0C 05 -- File Control Information (FCI) Issuer Discretionary Data
+                //                         9F 4D 02 -- Log Entry
+                //                                  0B 0A (BINARY)
+
+                // lloyds VC: nicht vorhanden
+
+                //parser.readLogEntry();
 
 
                 // store the emvCardSingleAid in the "all" model

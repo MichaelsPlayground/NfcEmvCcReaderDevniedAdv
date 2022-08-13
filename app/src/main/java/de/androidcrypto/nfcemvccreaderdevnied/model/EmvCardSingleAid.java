@@ -76,7 +76,9 @@ public class EmvCardSingleAid implements Serializable {
         this.isParsingCompleted = pIsParsingCompleted;
     }
 
-    // setter & getter
+    /**
+     * section for setter & getter
+     */
 
     public String getTimestampReadString() {
         return timestampReadString;

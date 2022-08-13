@@ -23,21 +23,20 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
+import com.github.devnied.emvnfccard.iso7816emv.TLV;
+import com.github.devnied.emvnfccard.utils.TlvUtil;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
+import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardDetail;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import fr.devnied.bitlib.BytesUtils;
 
@@ -83,6 +82,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
         aids = emvCardAids.getAids();
         emvCardSingleAids = emvCardAids.getEmvCardSingleAids();
         int aidsSize = aids.size();
+
         content = content + "\n" + "The model contains data for " + aidsSize + " aids\n";
         for (int i = 0; i < aidsSize; i++) {
             selectedAid = aids.get(i);
@@ -171,7 +171,68 @@ public class ImportModelFileActivity extends AppCompatActivity {
             }
             content = content + "\n" + "";
             content = content + "\n" + "------------------------\n";
-        }
+        } // this is the basic content
+
+        // lets analyze the data deeper
+        content = content + "\n" + "\n" + " === Deep analyzis of card data ===";
+        content = content + "\n" + "The model contains data for " + aidsSize + " aids\n";
+        for (int i = 0; i < aidsSize; i++) {
+            selectedAid = aids.get(i);
+            emvCardSingleAid = emvCardSingleAids.get(i);
+            content = content + "\n" + "aid nr " + (i + 1) + " : " + BytesUtils.bytesToString(selectedAid);
+
+            // get the card number (PAN) from several available sources
+            /*
+            The 8 Byte (16 Digit) code printed on Smart Card (Payment Chip Card) is retrievable.
+            This information is the part of "Track 2 Equivalent Data" personalized in the records
+            in Tag 57.
+            You can slice the initial 8 Bytes of this "Track 2 Equivalent Data" to get your code.
+             */
+
+            List<byte[]> apduReadRecordsResponse = emvCardSingleAid.getApduReadRecordsResponse();
+            List<String> apduReadRecordsResponseParsed = emvCardSingleAid.getApduReadRecordsResponseParsed();
+            if (apduReadRecordsResponse != null) {
+                int apduReadRecordsResponseSize = apduReadRecordsResponse.size();
+                content = content + "\n" + "we do have " + apduReadRecordsResponseSize + " entries to read\n";
+                for (int j = 0; j < apduReadRecordsResponseSize; j++) {
+                    content = content + "\n" + "get data from record " + (j + 1);
+                        byte[] apduReadRecordResponse = apduReadRecordsResponse.get(j);
+                        String apduReadRecordsResponseParsedString = apduReadRecordsResponseParsed.get(j);
+                        content = content + "\n" + "apduReadRecordResponse: " + BytesUtils.bytesToString(apduReadRecordResponse);
+                        content = content + "\n" + "apduReadRecordParsed:\n" + apduReadRecordsResponseParsedString;
+                        List<TLV> listTlvPan = TlvUtil.getlistTLV(apduReadRecordResponse, EmvTags.PAN);
+                        if (listTlvPan.size() != 0) {
+                            TLV tagPan = listTlvPan.get(0);
+                            byte[] pan = tagPan.getValueBytes();
+                            content = content + "\n" + "PAN: " + BytesUtils.bytesToString(pan);
+                        } else {
+                            content = content + "\n" + "NO PAN found";
+                        }
+                    /*
+                    String apduReadRecordResponseParsed = apduReadRecordsResponseParsed.get(j);
+                    content = content + "\n" + "apduReadRecordParsed:\n" + apduReadRecordResponseParsed;
+                    */
+                    content = content + "\n" + "------------------------\n";
+                }
+            } else {
+                content = content + "\n" + "There is no AFL record available";
+            }
+
+
+            /*
+            https://saush.wordpress.com/2006/09/08/getting-information-from-an-emv-chip-card/
+            aud:
+            The fourth byte (00) indicates the number of records involved in offline data authentication
+            starting with the record number coded in the second byte. The fourth byte may range from
+            zero to the value of the third byte less the value of the second byte plus 1. There is no
+            offline data authentication with the first group of 4 bytes.
+             */
+
+            content = content + "\n" + "------------------------\n";
+        } // loop through selectedAids
+        content = content + "\n" + "\n" + " === Deep analyzis of card data END ===";
+
+
 
 
         content = content + "\n" + "";
@@ -186,6 +247,57 @@ public class ImportModelFileActivity extends AppCompatActivity {
         readResult.setText(content);
     }
 
+    /**
+     * section for deep card analyzing
+     */
+
+    private boolean getPan (byte[] data, EmvCardDetail emvCardDetail) {
+        boolean status = false;
+        List<TLV> listTlv = TlvUtil.getlistTLV(data, EmvTags.PAN);
+        if (listTlv.size() != 0) {
+            TLV tag = listTlv.get(0); // only one pan per AID
+            emvCardDetail.setPan(tag.getValueBytes());
+            status = true;
+        }
+        return status;
+    }
+
+    private boolean getPanSequenceNumber (byte[] data, EmvCardDetail emvCardDetail) {
+        boolean status = false;
+        List<TLV> listTlv = TlvUtil.getlistTLV(data, EmvTags.PAN_SEQUENCE_NUMBER);
+        if (listTlv.size() != 0) {
+            TLV tag = listTlv.get(0); // only one pan per AID
+            emvCardDetail.setPanSequenceNumber(tag.getValueBytes());
+            status = true;
+        }
+        return status;
+    }
+
+    private boolean getCardExpirationDate (byte[] data, EmvCardDetail emvCardDetail) {
+        boolean status = false;
+        List<TLV> listTlv = TlvUtil.getlistTLV(data, EmvTags.APP_EXPIRATION_DATE);
+        if (listTlv.size() != 0) {
+            TLV tag = listTlv.get(0); // only one pan per AID
+            emvCardDetail.setCardExirationDate(tag.getValueBytes());
+            status = true;
+        }
+        return status;
+    }
+
+    private boolean getCardEffectiveDate (byte[] data, EmvCardDetail emvCardDetail) {
+        boolean status = false;
+        List<TLV> listTlv = TlvUtil.getlistTLV(data, EmvTags.APP_EFFECTIVE_DATE);
+        if (listTlv.size() != 0) {
+            TLV tag = listTlv.get(0); // only one pan per AID
+            emvCardDetail.setCardEffectiveDate(tag.getValueBytes());
+            status = true;
+        }
+        return status;
+    }
+
+    /**
+     * section for menu
+     */
 
     private void verifyPermissionsReadModel() {
         String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
