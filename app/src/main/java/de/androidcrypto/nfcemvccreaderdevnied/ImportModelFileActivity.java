@@ -234,6 +234,8 @@ public class ImportModelFileActivity extends AppCompatActivity {
                                 " tag bytes: " + BytesUtils.bytesToString(iTag.getTagBytes());
                     }
 
+                    // todo: create own ITag und TagImpl methods - add the valueBtes to the tag
+
 
                     /*
                     String apduReadRecordResponseParsed = apduReadRecordsResponseParsed.get(j);
