@@ -49,6 +49,7 @@ import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardDetail;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
+import de.androidcrypto.nfcemvccreaderdevnied.model.TagNameValue;
 import fr.devnied.bitlib.BytesUtils;
 
 public class ImportModelFileActivity extends AppCompatActivity {
@@ -207,34 +208,34 @@ public class ImportModelFileActivity extends AppCompatActivity {
                 content = content + "\n" + "we do have " + apduReadRecordsResponseSize + " entries to read\n";
                 for (int j = 0; j < apduReadRecordsResponseSize; j++) {
                     content = content + "\n" + "get data from record " + (j + 1);
-                        byte[] apduReadRecordResponse = apduReadRecordsResponse.get(j);
-                        String apduReadRecordsResponseParsedString = apduReadRecordsResponseParsed.get(j);
-                        content = content + "\n" + "apduReadRecordResponse: " + BytesUtils.bytesToString(apduReadRecordResponse);
-                        content = content + "\n" + "apduReadRecordParsed:\n" + apduReadRecordsResponseParsedString;
-                        List<TLV> listTlvPan = TlvUtil.getlistTLV(apduReadRecordResponse, EmvTags.PAN);
-                        if (listTlvPan.size() != 0) {
-                            TLV tagPan = listTlvPan.get(0);
-                            byte[] pan = tagPan.getValueBytes();
-                            content = content + "\n" + "PAN: " + BytesUtils.bytesToString(pan);
-                        } else {
-                            content = content + "\n" + "NO PAN found";
-                        }
+                    byte[] apduReadRecordResponse = apduReadRecordsResponse.get(j);
+                    String apduReadRecordsResponseParsedString = apduReadRecordsResponseParsed.get(j);
+                    content = content + "\n" + "apduReadRecordResponse: " + BytesUtils.bytesToString(apduReadRecordResponse);
+                    content = content + "\n" + "apduReadRecordParsed:\n" + apduReadRecordsResponseParsedString;
+                    List<TLV> listTlvPan = TlvUtil.getlistTLV(apduReadRecordResponse, EmvTags.PAN);
+                    if (listTlvPan.size() != 0) {
+                        TLV tagPan = listTlvPan.get(0);
+                        byte[] pan = tagPan.getValueBytes();
+                        content = content + "\n" + "PAN: " + BytesUtils.bytesToString(pan);
+                    } else {
+                        content = content + "\n" + "NO PAN found";
+                    }
 
                     //content = content + "\n" + "*** PRETTYPRINTOWN:\n" + prettyPrintAPDUResponse(apduReadRecordResponse, 0);
                     content = content + "\n" + "== try to get all tags in response ==";
-                    List<ITag> iTagList;
-                    iTagList = itagAPDUResponse(apduReadRecordResponse, 0);
-                    int iTagListSize = iTagList.size();
-                    content = content + "\n" + "== iTagListSize: " + iTagListSize;
-                    for (int k = 0; k < iTagListSize; k++) {
-                        ITag iTag = iTagList.get(k);
-                        content = content + "\n" + "== tagAndLength " + k +
-                                " tag: " + BytesUtils.bytesToString(iTag.getTagBytes()) +
-                                " tagname: " + iTag.getName() +
-                                " tag bytes: " + BytesUtils.bytesToString(iTag.getTagBytes());
+                    List<TagNameValue> tagList;
+                    tagList = tagAPDUResponse(apduReadRecordResponse, 0);
+                    int tagListSize = tagList.size();
+                    content = content + "\n" + "== tagListSize: " + tagListSize;
+                    for (int k = 0; k < tagListSize; k++) {
+                        TagNameValue tag = tagList.get(k);
+                        content = content + "\n" + "== tagNameValue " + k + "\n" +
+                                " tag: " + BytesUtils.bytesToString(tag.getTagBytes()) + "\n" +
+                                " tagname: " + tag.getTagName() + "\n" +
+                                " tag value bytes: " + BytesUtils.bytesToString(tag.getTagValueBytes()) + "\n" +
+                                " tag description: " + tag.getTagDescription() + "\n";
                     }
 
-                    // todo: create own ITag und TagImpl methods - add the valueBtes to the tag
 
 
                     /*
@@ -278,8 +279,6 @@ public class ImportModelFileActivity extends AppCompatActivity {
         content = content + "\n" + "\n" + " === Deep analyzis of card data END ===";
 
 
-
-
         content = content + "\n" + "";
         content = content + "\n" + "------------------------\n";
         content = content + "\n" + "";
@@ -296,8 +295,8 @@ public class ImportModelFileActivity extends AppCompatActivity {
      * section for deep card analyzing
      */
 
-    public static List<ITag> itagAPDUResponse(final byte[] data, final int indentLength) {
-        List<ITag> iTagList = new ArrayList<ITag>();
+    public static List<TagNameValue> tagAPDUResponse(final byte[] data, final int indentLength) {
+        List<TagNameValue> tagList = new ArrayList<TagNameValue>();
         //StringBuilder buf = new StringBuilder();
         TLVInputStream stream = new TLVInputStream(new ByteArrayInputStream(data));
 
@@ -337,7 +336,13 @@ public class ImportModelFileActivity extends AppCompatActivity {
                 byte[] valueBytes = tlv.getValueBytes();
                 ITag tag = tlv.getTag();
 
-                iTagList.add(tag);
+                TagNameValue tagNameValue = new TagNameValue();
+                tagNameValue.setTagBytes(tlv.getTagBytes());
+                tagNameValue.setTagName(tlv.getTag().getName());
+                tagNameValue.setTagRawEncodedLengthBytes(tlv.getRawEncodedLengthBytes());
+                tagNameValue.setTagValueBytes(tlv.getValueBytes());
+                tagNameValue.setTagDescription(tag.getDescription());
+                tagList.add(tagNameValue);
 
                 //buf.append(prettyPrintHex(tagBytes));
                 //buf.append(" ");
@@ -352,7 +357,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     // Recursion
                     //buf.append(prettyPrintAPDUResponse(valueBytes, indentLength + extraIndent));
                     //buf.append(itagAPDUResponseNext(valueBytes, indentLength + extraIndent, iTagList));
-                    itagAPDUResponseNext(valueBytes, indentLength + extraIndent, iTagList);
+                    tagAPDUResponseNext(valueBytes, indentLength + extraIndent, tagList);
                 } else {
                     //buf.append("\n");
                     if (tag.getTagValueType() == TagValueTypeEnum.DOL) {
@@ -377,7 +382,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
             IOUtils.closeQuietly(stream);
         }
         //return buf.toString();
-        return iTagList;
+        return tagList;
     }
 
     public static List<ITag> itagAPDUResponseOrg(final byte[] data, final int indentLength) {
@@ -435,7 +440,8 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     // indentLength += extraIndent; //TODO check this
                     // Recursion
                     //buf.append(prettyPrintAPDUResponse(valueBytes, indentLength + extraIndent));
-                    buf.append(itagAPDUResponseNext(valueBytes, indentLength + extraIndent, iTagList));
+                    //buf.append(itagAPDUResponseNext(valueBytes, indentLength + extraIndent, iTagList));
+                    buf.append(itagAPDUResponseNextOrg(valueBytes, indentLength + extraIndent, iTagList));
                 } else {
                     buf.append("\n");
                     if (tag.getTagValueType() == TagValueTypeEnum.DOL) {
@@ -463,14 +469,14 @@ public class ImportModelFileActivity extends AppCompatActivity {
         return iTagList;
     }
 
-    public static List<ITag> itagAPDUResponseNext(final byte[] data, final int indentLength, List<ITag> iTagList) {
+    public static List<TagNameValue> tagAPDUResponseNext(final byte[] data, final int indentLength, List<TagNameValue> tagList) {
         //List<ITag> itagList = new ArrayList<ITag>();
-        StringBuilder buf = new StringBuilder();
+        //StringBuilder buf = new StringBuilder();
         TLVInputStream stream = new TLVInputStream(new ByteArrayInputStream(data));
 
         try {
             while (stream.available() > 0) {
-                buf.append("\n");
+                //buf.append("\n");
                 if (stream.available() == 2) {
                     stream.mark(0);
                     byte[] value = new byte[2];
@@ -480,20 +486,20 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     }
                     SwEnum sw = SwEnum.getSW(value);
                     if (sw != null) {
-                        buf.append(getSpaces(0));
-                        buf.append(BytesUtils.bytesToString(value)).append(" -- ");
-                        buf.append(sw.getDetail());
+                        //buf.append(getSpaces(0));
+                        //buf.append(BytesUtils.bytesToString(value)).append(" -- ");
+                        //buf.append(sw.getDetail());
                         continue;
                     }
                     stream.reset();
                 }
 
-                buf.append(getSpaces(indentLength));
+                //buf.append(getSpaces(indentLength));
 
                 TLV tlv = TlvUtil.getNextTLV(stream);
 
                 if (tlv == null) {
-                    buf.setLength(0);
+                    //buf.setLength(0);
                     System.out.println("ERROR: TLV format error");
                     // LOGGER.debug("TLV format error");
                     break;
@@ -504,13 +510,19 @@ public class ImportModelFileActivity extends AppCompatActivity {
                 byte[] valueBytes = tlv.getValueBytes();
                 ITag tag = tlv.getTag();
 
-                iTagList.add(tag);
+                TagNameValue tagNameValue = new TagNameValue();
+                tagNameValue.setTagBytes(tlv.getTagBytes());
+                tagNameValue.setTagName(tlv.getTag().getName());
+                tagNameValue.setTagRawEncodedLengthBytes(tlv.getRawEncodedLengthBytes());
+                tagNameValue.setTagValueBytes(tlv.getValueBytes());
+                tagNameValue.setTagDescription(tag.getDescription());
+                tagList.add(tagNameValue);
 
-                buf.append(prettyPrintHex(tagBytes));
-                buf.append(" ");
-                buf.append(prettyPrintHex(lengthBytes));
-                buf.append(" -- ");
-                buf.append(tag.getName());
+                //buf.append(prettyPrintHex(tagBytes));
+                //buf.append(" ");
+                //buf.append(prettyPrintHex(lengthBytes));
+                //buf.append(" -- ");
+                //buf.append(tag.getName());
 
                 int extraIndent = (lengthBytes.length + tagBytes.length) * 3;
 
@@ -518,17 +530,18 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     // indentLength += extraIndent; //TODO check this
                     // Recursion
                     //buf.append(prettyPrintAPDUResponse(valueBytes, indentLength + extraIndent));
-                    buf.append(itagAPDUResponse(valueBytes, indentLength + extraIndent));
+                    //buf.append(itagAPDUResponse(valueBytes, indentLength + extraIndent));
+                    tagAPDUResponse(valueBytes, indentLength + extraIndent);
                 } else {
-                    buf.append("\n");
+                    //buf.append("\n");
                     if (tag.getTagValueType() == TagValueTypeEnum.DOL) {
-                        buf.append(TlvUtil.getFormattedTagAndLength(valueBytes, indentLength + extraIndent));
+                        //buf.append(TlvUtil.getFormattedTagAndLength(valueBytes, indentLength + extraIndent));
                     } else {
-                        buf.append(getSpaces(indentLength + extraIndent));
-                        buf.append(prettyPrintHex(BytesUtils.bytesToStringNoSpace(valueBytes), indentLength + extraIndent));
-                        buf.append(" (");
-                        buf.append(getTagValueAsString(tag, valueBytes));
-                        buf.append(")");
+                        //buf.append(getSpaces(indentLength + extraIndent));
+                        //buf.append(prettyPrintHex(BytesUtils.bytesToStringNoSpace(valueBytes), indentLength + extraIndent));
+                        //buf.append(" (");
+                        //buf.append(getTagValueAsString(tag, valueBytes));
+                        //buf.append(")");
                     }
                 }
             }
@@ -536,14 +549,14 @@ public class ImportModelFileActivity extends AppCompatActivity {
             System.out.println("Error: " + e);
             //LOGGER.error(e.getMessage(), e);
         } catch (TlvException exce) {
-            buf.setLength(0);
+            //buf.setLength(0);
             System.out.println("ERROR TlvException: " + exce);
             //LOGGER.debug(exce.getMessage(), exce);
         } finally {
             IOUtils.closeQuietly(stream);
         }
         //return buf.toString();
-        return iTagList;
+        return tagList;
     }
 
     public static List<ITag> itagAPDUResponseNextOrg(final byte[] data, final int indentLength, List<ITag> iTagList) {
@@ -602,7 +615,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     // Recursion
                     //buf.append(prettyPrintAPDUResponse(valueBytes, indentLength + extraIndent));
                     //buf.append(itagAPDUResponse(valueBytes, indentLength + extraIndent));
-                    itagAPDUResponse(valueBytes, indentLength + extraIndent);
+                    tagAPDUResponse(valueBytes, indentLength + extraIndent);
 
                 } else {
                     //buf.append("\n");
@@ -715,10 +728,8 @@ public class ImportModelFileActivity extends AppCompatActivity {
     /**
      * Method used get Tag value as String
      *
-     * @param tag
-     *            tag type
-     * @param value
-     *            tag value
+     * @param tag   tag type
+     * @param value tag value
      * @return
      */
     private static String getTagValueAsString(final ITag tag, final byte[] value) {
@@ -804,7 +815,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
         return buf.toString();
     }
 
-    private boolean getPan (byte[] data, EmvCardDetail emvCardDetail) {
+    private boolean getPan(byte[] data, EmvCardDetail emvCardDetail) {
         boolean status = false;
         List<TLV> listTlv = TlvUtil.getlistTLV(data, EmvTags.PAN);
         if (listTlv.size() != 0) {
@@ -815,7 +826,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
         return status;
     }
 
-    private boolean getPanSequenceNumber (byte[] data, EmvCardDetail emvCardDetail) {
+    private boolean getPanSequenceNumber(byte[] data, EmvCardDetail emvCardDetail) {
         boolean status = false;
         List<TLV> listTlv = TlvUtil.getlistTLV(data, EmvTags.PAN_SEQUENCE_NUMBER);
         if (listTlv.size() != 0) {
@@ -826,7 +837,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
         return status;
     }
 
-    private boolean getCardExpirationDate (byte[] data, EmvCardDetail emvCardDetail) {
+    private boolean getCardExpirationDate(byte[] data, EmvCardDetail emvCardDetail) {
         boolean status = false;
         List<TLV> listTlv = TlvUtil.getlistTLV(data, EmvTags.APP_EXPIRATION_DATE);
         if (listTlv.size() != 0) {
@@ -837,7 +848,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
         return status;
     }
 
-    private boolean getCardEffectiveDate (byte[] data, EmvCardDetail emvCardDetail) {
+    private boolean getCardEffectiveDate(byte[] data, EmvCardDetail emvCardDetail) {
         boolean status = false;
         List<TLV> listTlv = TlvUtil.getlistTLV(data, EmvTags.APP_EFFECTIVE_DATE);
         if (listTlv.size() != 0) {
