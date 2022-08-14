@@ -26,6 +26,7 @@ public class TagNameValue implements Serializable {
     private byte[] tagValueBytes;
     private String tagName;
     private String tagDescription;
+    private String tagValueType;
 
     /**
      * section for constructor / init
@@ -80,5 +81,13 @@ public class TagNameValue implements Serializable {
 
     public void setTagDescription(String tagDescription) {
         this.tagDescription = tagDescription;
+    }
+
+    public String getTagValueType() {
+        return tagValueType;
+    }
+
+    public void setTagValueType(String tagValueType) {
+        this.tagValueType = tagValueType;
     }
 }

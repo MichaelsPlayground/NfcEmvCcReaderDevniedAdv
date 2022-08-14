@@ -1,14 +1,5 @@
 package de.androidcrypto.nfcemvccreaderdevnied;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
@@ -23,13 +14,21 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.github.devnied.emvnfccard.enums.SwEnum;
 import com.github.devnied.emvnfccard.enums.TagValueTypeEnum;
 import com.github.devnied.emvnfccard.exception.TlvException;
 import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
 import com.github.devnied.emvnfccard.iso7816emv.ITag;
 import com.github.devnied.emvnfccard.iso7816emv.TLV;
-import com.github.devnied.emvnfccard.iso7816emv.TagAndLength;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -45,14 +44,13 @@ import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardDetail;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import de.androidcrypto.nfcemvccreaderdevnied.model.TagNameValue;
 import fr.devnied.bitlib.BytesUtils;
 
-public class ImportModelFileActivity extends AppCompatActivity {
+public class ImportModelFileActivityV1 extends AppCompatActivity {
 
     Context contextSave;
     TextView readResult;
@@ -185,7 +183,6 @@ public class ImportModelFileActivity extends AppCompatActivity {
             content = content + "\n" + "------------------------\n";
         } // this is the basic content
 */
-
         // lets analyze the data deeper
         content = content + "\n" + "\n" + " === Deep analyzis of card data ===";
         content = content + "\n" + "The model contains data for " + aidsSize + " aids\n";
@@ -201,7 +198,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
             in Tag 57.
             You can slice the initial 8 Bytes of this "Track 2 Equivalent Data" to get your code.
              */
-/*
+
             List<byte[]> apduReadRecordsResponse = emvCardSingleAid.getApduReadRecordsResponse();
             List<String> apduReadRecordsResponseParsed = emvCardSingleAid.getApduReadRecordsResponseParsed();
             if (apduReadRecordsResponse != null) {
@@ -221,66 +218,50 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     } else {
                         content = content + "\n" + "NO PAN found";
                     }
-*/
-            content = content + "\n" + "== try to get all tags in apduSelectPpseResponse ==";
-            byte[] apduSelectPpseResponse = emvCardSingleAid.getApduSelectPpseResponse();
-            List<TagNameValue> tagListApduSelectPpseResponse = new ArrayList<TagNameValue>();
-            String contentApduSelectPpseResponse = parseAndPrintApduRespond(apduSelectPpseResponse, tagListApduSelectPpseResponse);
-            tagApduResponse(apduSelectPpseResponse, 0, tagListApduSelectPpseResponse);
-            content = content + "\n" + contentApduSelectPpseResponse;
 
-            content = content + "\n" + "== try to get all tags in apduSelectPidResponse ==";
-            byte[] apduSelectPidResponse = emvCardSingleAid.getApduSelectPidResponse();
-            List<TagNameValue> tagListApduSelectPidResponse = new ArrayList<TagNameValue>();
-            String contentApduSelectPidResponse = parseAndPrintApduRespond(apduSelectPidResponse, tagListApduSelectPidResponse);
-            content = content + "\n" + contentApduSelectPidResponse;
-
-            content = content + "\n" + "== try to get all tags in apduGetProcessingOptionsResponse ==";
-            byte[] apduGetProcessingOptionsResponse = emvCardSingleAid.getApduGetProcessingOptionsResponse();
-            if (apduGetProcessingOptionsResponse != null) {
-                List<TagNameValue> tagListApduGetProcessingOptionsResponse = new ArrayList<TagNameValue>();
-                String contentApduGetProcessingOptionsResponse = parseAndPrintApduRespond(apduGetProcessingOptionsResponse, tagListApduGetProcessingOptionsResponse);
-                content = content + "\n" + contentApduGetProcessingOptionsResponse;
-            } else {
-                content = content + "\n" + "no apduGetProcessingOptionsResponse available";
-            }
-
-            content = content + "\n" + "== try to get all tags in apduReadRecordResponse ==";
-            List<byte[]> apduReadRecordsResponse = emvCardSingleAid.getApduReadRecordsResponse();
-            //List<String> apduReadRecordsResponseParsed = emvCardSingleAid.getApduReadRecordsResponseParsed();
-            if (apduReadRecordsResponse != null) {
-                int apduReadRecordsResponseSize = apduReadRecordsResponse.size();
-                content = content + "\n" + "we do have " + apduReadRecordsResponseSize + " entries to read\n";
-                for (int k = 0; k < apduReadRecordsResponseSize; k++) {
-                    content = content + "\n" + "get data from record " + (k + 1);
-                    byte[] apduReadRecordResponse = apduReadRecordsResponse.get(k);
-                    List<TagNameValue> tagListApduReadRecordResponse = new ArrayList<TagNameValue>();
-                    String contentApduReadRecordResponse = parseAndPrintApduRespond(apduReadRecordResponse, tagListApduReadRecordResponse);
-                    content = content + "\n" + contentApduReadRecordResponse;
-                    /*
-                    tagApduResponse(apduReadRecordResponse, 0, tagListApduReadRecordResponse);
-                    int tagListApduReadRecordSize = tagListApduReadRecordResponse.size();
-                    content = content + "\n" + "== tagListSize: " + tagListApduReadRecordSize;
-                    for (int k = 0; k < tagListApduReadRecordSize; k++) {
-                        TagNameValue tag = tagListApduReadRecordResponse.get(k);
+                    //content = content + "\n" + "*** PRETTYPRINTOWN:\n" + prettyPrintAPDUResponse(apduReadRecordResponse, 0);
+                    content = content + "\n" + "== try to get all tags in response ==";
+                    List<TagNameValue> tagList;
+                    tagList = tagAPDUResponse(apduReadRecordResponse, 0);
+                    int tagListSize = tagList.size();
+                    content = content + "\n" + "== tagListSize: " + tagListSize;
+                    for (int k = 0; k < tagListSize; k++) {
+                        TagNameValue tag = tagList.get(k);
                         content = content + "\n" + "== tagNameValue " + k + "\n" +
-                                printTagNameValue(tag);
+                                " tag: " + BytesUtils.bytesToString(tag.getTagBytes()) + "\n" +
+                                " tagname: " + tag.getTagName() + "\n" +
+                                " tag value bytes: " + BytesUtils.bytesToString(tag.getTagValueBytes()) + "\n" +
+                                " tag description: " + tag.getTagDescription() + "\n";
+                    }
+
+
+
+                    /*
+                    String apduReadRecordResponseParsed = apduReadRecordsResponseParsed.get(j);
+                    content = content + "\n" + "apduReadRecordParsed:\n" + apduReadRecordResponseParsed;
+                    */
+/*
+                    content = content + "\n" + "== try to get all tags in response ==";
+                    List<TagAndLength> tagAndLengthList = TlvUtil.parseTagAndLength(apduReadRecordResponse);
+                    int tagAndLengthListSize = tagAndLengthList.size();
+                    content = content + "\n" + "== tagAndLengthListSize: " + tagAndLengthListSize;
+                    for (int k = 0; k < tagAndLengthListSize; k++) {
+                        TagAndLength tagAndLength = tagAndLengthList.get(k);
+                        ITag tag = tagAndLength.getTag();
+                        content = content + "\n" + "== tagAndLength " + k +
+                                " tag: " + BytesUtils.bytesToString(tag.getTagBytes()) +
+                                " tagname: " + tag.getName() +
+                                " value bytes: " + BytesUtils.bytesToString(tagAndLength.getBytes());
                     }
 */
+
+
+                    content = content + "\n" + "------------------------\n";
                 }
             } else {
                 content = content + "\n" + "There is no AFL record available";
             }
 
-            content = content + "\n" + "------------------------\n";
-        }
-        /*
-    } else
-
-    {
-        content = content + "\n" + "There is no AFL record available";
-    }
-*/
 
             /*
             https://saush.wordpress.com/2006/09/08/getting-information-from-an-emv-chip-card/
@@ -291,51 +272,29 @@ public class ImportModelFileActivity extends AppCompatActivity {
             offline data authentication with the first group of 4 bytes.
              */
 
+            content = content + "\n" + "------------------------\n";
+        } // loop through selectedAids
+        content = content + "\n" + "\n" + " === Deep analyzis of card data END ===";
+
+
+        content = content + "\n" + "";
         content = content + "\n" + "------------------------\n";
-    //} // loop through selectedAids
-
-    content=content+"\n"+"\n"+" === Deep analyzis of card data END ===";
-
-
-    content=content+"\n"+"";
-    content=content+"\n"+"------------------------\n";
-    content=content+"\n"+"";
-    content=content+"\n"+"";
-    content=content+"\n"+"";
-    content=content+"\n"+"";
-    content=content+"\n"+"";
+        content = content + "\n" + "";
+        content = content + "\n" + "";
+        content = content + "\n" + "";
+        content = content + "\n" + "";
+        content = content + "\n" + "";
 
 
-                readResult.setText(content);
-}
+        readResult.setText(content);
+    }
 
     /**
      * section for deep card analyzing
      */
 
-    public static String parseAndPrintApduRespond(byte[] apduResponse, List<TagNameValue> tagList) {
-        String output = "";
-        tagApduResponse(apduResponse, 0, tagList);
-        int tagListSize = tagList.size();
-        output = output + "\n" + "== tagListSize: " + tagListSize;
-        for (int i = 0; i < tagListSize; i++) {
-            TagNameValue tag = tagList.get(i);
-            output = output + "\n" + "== tagNameValue " + i + "\n" +
-                    printTagNameValue(tag);
-        }
-        return output;
-    }
-
-    public static String printTagNameValue(TagNameValue tag) {
-        return "tag: " + BytesUtils.bytesToString(tag.getTagBytes()) + "\n" +
-                "tagname: " + tag.getTagName() + "\n" +
-                "tag value bytes: " + BytesUtils.bytesToString(tag.getTagValueBytes()) + "\n" +
-                "tag description: " + tag.getTagDescription() + "\n" +
-                "tag value type: " + tag.getTagValueType() + "\n";
-    }
-
-    public static void tagApduResponse(final byte[] data, final int indentLength, List<TagNameValue> tagList) {
-        //List<TagNameValue> tagList = new ArrayList<TagNameValue>();
+    public static List<TagNameValue> tagAPDUResponse(final byte[] data, final int indentLength) {
+        List<TagNameValue> tagList = new ArrayList<TagNameValue>();
         //StringBuilder buf = new StringBuilder();
         TLVInputStream stream = new TLVInputStream(new ByteArrayInputStream(data));
 
@@ -358,7 +317,9 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     }
                     stream.reset();
                 }
+
                 //buf.append(getSpaces(indentLength));
+
                 TLV tlv = TlvUtil.getNextTLV(stream);
 
                 if (tlv == null) {
@@ -378,8 +339,6 @@ public class ImportModelFileActivity extends AppCompatActivity {
                 tagNameValue.setTagName(tlv.getTag().getName());
                 tagNameValue.setTagRawEncodedLengthBytes(tlv.getRawEncodedLengthBytes());
                 tagNameValue.setTagValueBytes(tlv.getValueBytes());
-                TagValueTypeEnum tagValueTypeEnum = tag.getTagValueType();
-                tagNameValue.setTagValueType(tagValueTypeEnum.name());
                 tagNameValue.setTagDescription(tag.getDescription());
                 tagList.add(tagNameValue);
 
@@ -396,7 +355,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     // Recursion
                     //buf.append(prettyPrintAPDUResponse(valueBytes, indentLength + extraIndent));
                     //buf.append(itagAPDUResponseNext(valueBytes, indentLength + extraIndent, iTagList));
-                    tagApduResponse(valueBytes, indentLength + extraIndent, tagList);
+                    tagAPDUResponseNext(valueBytes, indentLength + extraIndent, tagList);
                 } else {
                     //buf.append("\n");
                     if (tag.getTagValueType() == TagValueTypeEnum.DOL) {
@@ -421,7 +380,437 @@ public class ImportModelFileActivity extends AppCompatActivity {
             IOUtils.closeQuietly(stream);
         }
         //return buf.toString();
-        //return tagList;
+        return tagList;
+    }
+
+    public static List<ITag> itagAPDUResponseOrg(final byte[] data, final int indentLength) {
+        List<ITag> iTagList = new ArrayList<ITag>();
+        StringBuilder buf = new StringBuilder();
+        TLVInputStream stream = new TLVInputStream(new ByteArrayInputStream(data));
+
+        try {
+            while (stream.available() > 0) {
+                buf.append("\n");
+                if (stream.available() == 2) {
+                    stream.mark(0);
+                    byte[] value = new byte[2];
+                    try {
+                        stream.read(value);
+                    } catch (IOException e) {
+                    }
+                    SwEnum sw = SwEnum.getSW(value);
+                    if (sw != null) {
+                        buf.append(getSpaces(0));
+                        buf.append(BytesUtils.bytesToString(value)).append(" -- ");
+                        buf.append(sw.getDetail());
+                        continue;
+                    }
+                    stream.reset();
+                }
+
+                buf.append(getSpaces(indentLength));
+
+                TLV tlv = TlvUtil.getNextTLV(stream);
+
+                if (tlv == null) {
+                    buf.setLength(0);
+                    System.out.println("ERROR: TLV format error");
+                    // LOGGER.debug("TLV format error");
+                    break;
+                }
+
+                byte[] tagBytes = tlv.getTagBytes();
+                byte[] lengthBytes = tlv.getRawEncodedLengthBytes();
+                byte[] valueBytes = tlv.getValueBytes();
+                ITag tag = tlv.getTag();
+
+                iTagList.add(tag);
+
+                buf.append(prettyPrintHex(tagBytes));
+                buf.append(" ");
+                buf.append(prettyPrintHex(lengthBytes));
+                buf.append(" -- ");
+                buf.append(tag.getName());
+
+                int extraIndent = (lengthBytes.length + tagBytes.length) * 3;
+
+                if (tag.isConstructed()) {
+                    // indentLength += extraIndent; //TODO check this
+                    // Recursion
+                    //buf.append(prettyPrintAPDUResponse(valueBytes, indentLength + extraIndent));
+                    //buf.append(itagAPDUResponseNext(valueBytes, indentLength + extraIndent, iTagList));
+                    buf.append(itagAPDUResponseNextOrg(valueBytes, indentLength + extraIndent, iTagList));
+                } else {
+                    buf.append("\n");
+                    if (tag.getTagValueType() == TagValueTypeEnum.DOL) {
+                        buf.append(TlvUtil.getFormattedTagAndLength(valueBytes, indentLength + extraIndent));
+                    } else {
+                        buf.append(getSpaces(indentLength + extraIndent));
+                        buf.append(prettyPrintHex(BytesUtils.bytesToStringNoSpace(valueBytes), indentLength + extraIndent));
+                        buf.append(" (");
+                        buf.append(getTagValueAsString(tag, valueBytes));
+                        buf.append(")");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error: " + e);
+            //LOGGER.error(e.getMessage(), e);
+        } catch (TlvException exce) {
+            buf.setLength(0);
+            System.out.println("ERROR TlvException: " + exce);
+            //LOGGER.debug(exce.getMessage(), exce);
+        } finally {
+            IOUtils.closeQuietly(stream);
+        }
+        //return buf.toString();
+        return iTagList;
+    }
+
+    public static List<TagNameValue> tagAPDUResponseNext(final byte[] data, final int indentLength, List<TagNameValue> tagList) {
+        //List<ITag> itagList = new ArrayList<ITag>();
+        //StringBuilder buf = new StringBuilder();
+        TLVInputStream stream = new TLVInputStream(new ByteArrayInputStream(data));
+
+        try {
+            while (stream.available() > 0) {
+                //buf.append("\n");
+                if (stream.available() == 2) {
+                    stream.mark(0);
+                    byte[] value = new byte[2];
+                    try {
+                        stream.read(value);
+                    } catch (IOException e) {
+                    }
+                    SwEnum sw = SwEnum.getSW(value);
+                    if (sw != null) {
+                        //buf.append(getSpaces(0));
+                        //buf.append(BytesUtils.bytesToString(value)).append(" -- ");
+                        //buf.append(sw.getDetail());
+                        continue;
+                    }
+                    stream.reset();
+                }
+
+                //buf.append(getSpaces(indentLength));
+
+                TLV tlv = TlvUtil.getNextTLV(stream);
+
+                if (tlv == null) {
+                    //buf.setLength(0);
+                    System.out.println("ERROR: TLV format error");
+                    // LOGGER.debug("TLV format error");
+                    break;
+                }
+
+                byte[] tagBytes = tlv.getTagBytes();
+                byte[] lengthBytes = tlv.getRawEncodedLengthBytes();
+                byte[] valueBytes = tlv.getValueBytes();
+                ITag tag = tlv.getTag();
+
+                TagNameValue tagNameValue = new TagNameValue();
+                tagNameValue.setTagBytes(tlv.getTagBytes());
+                tagNameValue.setTagName(tlv.getTag().getName());
+                tagNameValue.setTagRawEncodedLengthBytes(tlv.getRawEncodedLengthBytes());
+                tagNameValue.setTagValueBytes(tlv.getValueBytes());
+                tagNameValue.setTagDescription(tag.getDescription());
+                tagList.add(tagNameValue);
+
+                //buf.append(prettyPrintHex(tagBytes));
+                //buf.append(" ");
+                //buf.append(prettyPrintHex(lengthBytes));
+                //buf.append(" -- ");
+                //buf.append(tag.getName());
+
+                int extraIndent = (lengthBytes.length + tagBytes.length) * 3;
+
+                if (tag.isConstructed()) {
+                    // indentLength += extraIndent; //TODO check this
+                    // Recursion
+                    //buf.append(prettyPrintAPDUResponse(valueBytes, indentLength + extraIndent));
+                    //buf.append(itagAPDUResponse(valueBytes, indentLength + extraIndent));
+                    tagAPDUResponse(valueBytes, indentLength + extraIndent);
+                } else {
+                    //buf.append("\n");
+                    if (tag.getTagValueType() == TagValueTypeEnum.DOL) {
+                        //buf.append(TlvUtil.getFormattedTagAndLength(valueBytes, indentLength + extraIndent));
+                    } else {
+                        //buf.append(getSpaces(indentLength + extraIndent));
+                        //buf.append(prettyPrintHex(BytesUtils.bytesToStringNoSpace(valueBytes), indentLength + extraIndent));
+                        //buf.append(" (");
+                        //buf.append(getTagValueAsString(tag, valueBytes));
+                        //buf.append(")");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error: " + e);
+            //LOGGER.error(e.getMessage(), e);
+        } catch (TlvException exce) {
+            //buf.setLength(0);
+            System.out.println("ERROR TlvException: " + exce);
+            //LOGGER.debug(exce.getMessage(), exce);
+        } finally {
+            IOUtils.closeQuietly(stream);
+        }
+        //return buf.toString();
+        return tagList;
+    }
+
+    public static List<ITag> itagAPDUResponseNextOrg(final byte[] data, final int indentLength, List<ITag> iTagList) {
+        //List<ITag> itagList = new ArrayList<ITag>();
+        //StringBuilder buf = new StringBuilder();
+        TLVInputStream stream = new TLVInputStream(new ByteArrayInputStream(data));
+
+        try {
+            while (stream.available() > 0) {
+                //buf.append("\n");
+                if (stream.available() == 2) {
+                    stream.mark(0);
+                    byte[] value = new byte[2];
+                    try {
+                        stream.read(value);
+                    } catch (IOException e) {
+                    }
+                    SwEnum sw = SwEnum.getSW(value);
+                    if (sw != null) {
+                        //buf.append(getSpaces(0));
+                        //buf.append(BytesUtils.bytesToString(value)).append(" -- ");
+                        //buf.append(sw.getDetail());
+                        continue;
+                    }
+                    stream.reset();
+                }
+
+                //buf.append(getSpaces(indentLength));
+
+                TLV tlv = TlvUtil.getNextTLV(stream);
+
+                if (tlv == null) {
+                    //buf.setLength(0);
+                    System.out.println("ERROR: TLV format error");
+                    // LOGGER.debug("TLV format error");
+                    break;
+                }
+
+                byte[] tagBytes = tlv.getTagBytes();
+                byte[] lengthBytes = tlv.getRawEncodedLengthBytes();
+                byte[] valueBytes = tlv.getValueBytes();
+                ITag tag = tlv.getTag();
+
+                iTagList.add(tag);
+
+                //buf.append(prettyPrintHex(tagBytes));
+                //buf.append(" ");
+                //buf.append(prettyPrintHex(lengthBytes));
+                //buf.append(" -- ");
+                //buf.append(tag.getName());
+
+                int extraIndent = (lengthBytes.length + tagBytes.length) * 3;
+
+                if (tag.isConstructed()) {
+                    // indentLength += extraIndent; //TODO check this
+                    // Recursion
+                    //buf.append(prettyPrintAPDUResponse(valueBytes, indentLength + extraIndent));
+                    //buf.append(itagAPDUResponse(valueBytes, indentLength + extraIndent));
+                    tagAPDUResponse(valueBytes, indentLength + extraIndent);
+
+                } else {
+                    //buf.append("\n");
+                    if (tag.getTagValueType() == TagValueTypeEnum.DOL) {
+                        //buf.append(TlvUtil.getFormattedTagAndLength(valueBytes, indentLength + extraIndent));
+                    } else {
+                        //buf.append(getSpaces(indentLength + extraIndent));
+                        //buf.append(prettyPrintHex(BytesUtils.bytesToStringNoSpace(valueBytes), indentLength + extraIndent));
+                        //buf.append(" (");
+                        //buf.append(getTagValueAsString(tag, valueBytes));
+                        //buf.append(")");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error: " + e);
+            //LOGGER.error(e.getMessage(), e);
+        } catch (TlvException exce) {
+            //buf.setLength(0);
+            System.out.println("ERROR TlvException: " + exce);
+            //LOGGER.debug(exce.getMessage(), exce);
+        } finally {
+            IOUtils.closeQuietly(stream);
+        }
+        //return buf.toString();
+        return iTagList;
+    }
+
+
+    public static String prettyPrintAPDUResponse(final byte[] data, final int indentLength) {
+        List<TLV> tlvList = new ArrayList<TLV>();
+        StringBuilder buf = new StringBuilder();
+        TLVInputStream stream = new TLVInputStream(new ByteArrayInputStream(data));
+
+        try {
+            while (stream.available() > 0) {
+                buf.append("\n");
+                if (stream.available() == 2) {
+                    stream.mark(0);
+                    byte[] value = new byte[2];
+                    try {
+                        stream.read(value);
+                    } catch (IOException e) {
+                    }
+                    SwEnum sw = SwEnum.getSW(value);
+                    if (sw != null) {
+                        buf.append(getSpaces(0));
+                        buf.append(BytesUtils.bytesToString(value)).append(" -- ");
+                        buf.append(sw.getDetail());
+                        continue;
+                    }
+                    stream.reset();
+                }
+
+                buf.append(getSpaces(indentLength));
+
+                TLV tlv = TlvUtil.getNextTLV(stream);
+
+                if (tlv == null) {
+                    buf.setLength(0);
+                    System.out.println("ERROR: TLV format error");
+                    // LOGGER.debug("TLV format error");
+                    break;
+                }
+
+                byte[] tagBytes = tlv.getTagBytes();
+                byte[] lengthBytes = tlv.getRawEncodedLengthBytes();
+                byte[] valueBytes = tlv.getValueBytes();
+
+                ITag tag = tlv.getTag();
+
+                buf.append(prettyPrintHex(tagBytes));
+                buf.append(" ");
+                buf.append(prettyPrintHex(lengthBytes));
+                buf.append(" -- ");
+                buf.append(tag.getName());
+
+                int extraIndent = (lengthBytes.length + tagBytes.length) * 3;
+
+                if (tag.isConstructed()) {
+                    // indentLength += extraIndent; //TODO check this
+                    // Recursion
+                    buf.append(prettyPrintAPDUResponse(valueBytes, indentLength + extraIndent));
+                } else {
+                    buf.append("\n");
+                    if (tag.getTagValueType() == TagValueTypeEnum.DOL) {
+                        buf.append(TlvUtil.getFormattedTagAndLength(valueBytes, indentLength + extraIndent));
+                    } else {
+                        buf.append(getSpaces(indentLength + extraIndent));
+                        buf.append(prettyPrintHex(BytesUtils.bytesToStringNoSpace(valueBytes), indentLength + extraIndent));
+                        buf.append(" (");
+                        buf.append(getTagValueAsString(tag, valueBytes));
+                        buf.append(")");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error: " + e);
+            //LOGGER.error(e.getMessage(), e);
+        } catch (TlvException exce) {
+            buf.setLength(0);
+            System.out.println("ERROR TlvException: " + exce);
+            //LOGGER.debug(exce.getMessage(), exce);
+        } finally {
+            IOUtils.closeQuietly(stream);
+        }
+        return buf.toString();
+    }
+
+    /**
+     * Method used get Tag value as String
+     *
+     * @param tag   tag type
+     * @param value tag value
+     * @return
+     */
+    private static String getTagValueAsString(final ITag tag, final byte[] value) {
+        StringBuilder buf = new StringBuilder();
+
+        switch (tag.getTagValueType()) {
+            case TEXT:
+                buf.append("=");
+                buf.append(new String(value));
+                break;
+            case NUMERIC:
+                buf.append("NUMERIC");
+                break;
+            case BINARY:
+                buf.append("BINARY");
+                break;
+            case MIXED:
+                buf.append("=");
+                buf.append(getSafePrintChars(value));
+                break;
+            case DOL:
+                buf.append("");
+                break;
+            default:
+                break;
+        }
+
+        return buf.toString();
+    }
+
+    public static String getSafePrintChars(final byte[] byteArray) {
+        if (byteArray == null) {
+            return "";
+        }
+        return getSafePrintChars(byteArray, 0, byteArray.length);
+    }
+
+    public static String getSafePrintChars(final byte[] byteArray, final int startPos, final int length) {
+        if (byteArray == null) {
+            return "";
+        }
+        if (byteArray.length < startPos + length) {
+            throw new IllegalArgumentException("startPos(" + startPos + ")+length(" + length + ") > byteArray.length("
+                    + byteArray.length + ")");
+        }
+        StringBuilder buf = new StringBuilder();
+        for (int i = startPos; i < startPos + length; i++) {
+            if (byteArray[i] >= (byte) 0x20 && byteArray[i] < (byte) 0x7F) {
+                buf.append((char) byteArray[i]);
+            } else {
+                buf.append(".");
+            }
+        }
+        return buf.toString();
+    }
+
+    public static String getSpaces(final int length) {
+        return StringUtils.leftPad(StringUtils.EMPTY, length);
+    }
+
+    public static String prettyPrintHex(final String in, final int indent) {
+        return prettyPrintHex(in, indent, true);
+    }
+
+    public static String prettyPrintHex(final byte[] data) {
+        return prettyPrintHex(BytesUtils.bytesToStringNoSpace(data), 0, true);
+    }
+
+    public static String prettyPrintHex(final String in, final int indent, final boolean wrapLines) {
+        StringBuilder buf = new StringBuilder();
+
+        for (int i = 0; i < in.length(); i++) {
+            char c = in.charAt(i);
+            buf.append(c);
+
+            int nextPos = i + 1;
+            if (wrapLines && nextPos % 32 == 0 && nextPos != in.length()) {
+                buf.append("\n").append(getSpaces(indent));
+            } else if (nextPos % 2 == 0 && nextPos != in.length()) {
+                buf.append(" ");
+            }
+        }
+        return buf.toString();
     }
 
     private boolean getPan(byte[] data, EmvCardDetail emvCardDetail) {
