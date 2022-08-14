@@ -24,6 +24,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.github.devnied.emvnfccard.enums.SwEnum;
+import com.github.devnied.emvnfccard.enums.TagTypeEnum;
 import com.github.devnied.emvnfccard.enums.TagValueTypeEnum;
 import com.github.devnied.emvnfccard.exception.TlvException;
 import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
@@ -42,6 +43,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +52,8 @@ import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardDetail;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import de.androidcrypto.nfcemvccreaderdevnied.model.TagNameValue;
+import de.androidcrypto.nfcemvccreaderdevnied.utils.ApplicationInterchangeProfile;
+import de.androidcrypto.nfcemvccreaderdevnied.utils.CVMList;
 import fr.devnied.bitlib.BytesUtils;
 
 public class ImportModelFileActivity extends AppCompatActivity {
@@ -191,7 +195,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
 */
 
         // lets analyze the data deeper
-        content = content + "\n" + "\n" + " === Deep analyzis of card data ===";
+        content = content + "\n" + "\n" + " === Deep analyze of card data ===";
         content = content + "\n" + "The model contains data for " + aidsSize + " aids\n";
         for (int i = 0; i < aidsSize; i++) {
             selectedAid = aids.get(i);
@@ -240,7 +244,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
             String contentApduSelectPidResponse = parseAndPrintApduRespond(apduSelectPidResponse, tagListApduSelectPidResponse);
             content = content + "\n" + contentApduSelectPidResponse;
 
-
+            tagListTemp.addAll(tagListApduSelectPidResponse);
 
             content = content + "\n" + "== try to get all tags in apduGetProcessingOptionsResponse ==";
             byte[] apduGetProcessingOptionsResponse = emvCardSingleAid.getApduGetProcessingOptionsResponse();
@@ -248,9 +252,53 @@ public class ImportModelFileActivity extends AppCompatActivity {
                 List<TagNameValue> tagListApduGetProcessingOptionsResponse = new ArrayList<TagNameValue>();
                 String contentApduGetProcessingOptionsResponse = parseAndPrintApduRespond(apduGetProcessingOptionsResponse, tagListApduGetProcessingOptionsResponse);
                 content = content + "\n" + contentApduGetProcessingOptionsResponse;
+                tagListTemp.addAll(tagListApduGetProcessingOptionsResponse);
+
+                // search for tag 82 = Application Interchange Profile (e.g. "19 80")
+                byte[] aipByte = getTagValue(apduGetProcessingOptionsResponse, EmvTags.APPLICATION_INTERCHANGE_PROFILE);
+                content = content + "\n" + "== Application Interchange Profile data ==";
+                if (aipByte != null) {
+                    ApplicationInterchangeProfile aip =
+                            new ApplicationInterchangeProfile(aipByte[0], aipByte[1]);
+                    content = content + "\n" + aip.getCDASupportedString();
+                    content = content + "\n" + aip.getSDASupportedString();
+                    content = content + "\n" + aip.getDDASupportedString();
+                    content = content + "\n" + aip.getIssuerAuthenticationIsSupportedString();
+                    content = content + "\n" + aip.getTerminalRiskManagementToBePerformedString();
+                    content = content + "\n" + aip.getCardholderVerificationSupportedString();
+                    content = content + "\n" + "== Application Interchange Profile data ==\n";
+                    // build a new tag
+                    TagNameValue tnv = new TagNameValue();
+                    tnv.setTagBytes(new byte[] {
+                            (byte)0xff, 0x01});
+                    tnv.setTagName("AIP CDA Support");
+                    tnv.setTagValueType(TagValueTypeEnum.TEXT.toString());
+                    //tnv.setTagValueBytes(aip.getCDASupportedString().getBytes(StandardCharsets.UTF_8));
+                    if (aip.isCDASupported()) {
+                        tnv.setTagValueBytes(new byte[] { (byte)0x01});
+                    } else {
+                        tnv.setTagValueBytes(new byte[] { (byte)0x00});
+                    }
+                    tagListTemp.add(tnv);
+
+                    tnv = new TagNameValue();
+                    tnv.setTagBytes(new byte[] {
+                            (byte)0xff, 0x06});
+                    tnv.setTagName("AIP Cardholder Verification Support");
+                    tnv.setTagValueType(TagValueTypeEnum.TEXT.toString());
+                    //tnv.setTagValueBytes(aip.getCDASupportedString().getBytes(StandardCharsets.UTF_8));
+                    if (aip.isCardholderVerificationSupported()) {
+                        tnv.setTagValueBytes(new byte[] { (byte)0x01});
+                    } else {
+                        tnv.setTagValueBytes(new byte[] { (byte)0x00});
+                    }
+                    tagListTemp.add(tnv);
+                }
+
             } else {
                 content = content + "\n" + "no apduGetProcessingOptionsResponse available" + "\n";
             }
+
 
             content = content + "\n" + "== try to get all tags in apduReadRecordResponse ==";
             List<byte[]> apduReadRecordsResponse = emvCardSingleAid.getApduReadRecordsResponse();
@@ -263,6 +311,54 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     List<TagNameValue> tagListApduReadRecordResponse = new ArrayList<TagNameValue>();
                     String contentApduReadRecordResponse = parseAndPrintApduRespond(apduReadRecordResponse, tagListApduReadRecordResponse);
                     content = content + "\n" + contentApduReadRecordResponse;
+                    tagListTemp.addAll(tagListApduReadRecordResponse);
+
+                    // search for tag 8E = Cardholder Verification Method (CVM)
+                    // https://github.com/sasc999/javaemvreader/blob/master/src/main/java/sasc/emv/CVMList.java
+                    // https://github.com/sasc999/javaemvreader/blob/master/src/main/java/sasc/emv/EMVSession.java
+                    byte[] cvmByte = getTagValue(apduReadRecordResponse, EmvTags.CVM_LIST);
+                    if (cvmByte != null) {
+                        content = content + "\n" + "== Cardholder Verification Method (CVM) data ==";
+                        CVMList cvmList = new CVMList(cvmByte);
+                        content = content + "\n" + cvmList.toString();
+                        /*
+                        ApplicationInterchangeProfile aip =
+                                new ApplicationInterchangeProfile(aipByte[0], aipByte[1]);
+                        content = content + "\n" + aip.getCDASupportedString();
+                        content = content + "\n" + aip.getSDASupportedString();
+                        content = content + "\n" + aip.getDDASupportedString();
+                        content = content + "\n" + aip.getIssuerAuthenticationIsSupportedString();
+                        content = content + "\n" + aip.getTerminalRiskManagementToBePerformedString();
+                        content = content + "\n" + aip.getCardholderVerificationSupportedString();
+                        content = content + "\n" + "== Cardholder Verification Method (CVM) data ==\n";
+                        // build a new tag
+                        TagNameValue tnv = new TagNameValue();
+                        tnv.setTagBytes(new byte[] {
+                                (byte)0xff, 0x01});
+                        tnv.setTagName("AIP CDA Support");
+                        tnv.setTagValueType(TagValueTypeEnum.TEXT.toString());
+                        //tnv.setTagValueBytes(aip.getCDASupportedString().getBytes(StandardCharsets.UTF_8));
+                        if (aip.isCDASupported()) {
+                            tnv.setTagValueBytes(new byte[] { (byte)0x01});
+                        } else {
+                            tnv.setTagValueBytes(new byte[] { (byte)0x00});
+                        }
+                        tagListTemp.add(tnv);
+
+                        tnv = new TagNameValue();
+                        tnv.setTagBytes(new byte[] {
+                                (byte)0xff, 0x06});
+                        tnv.setTagName("AIP Cardholder Verification Support");
+                        tnv.setTagValueType(TagValueTypeEnum.TEXT.toString());
+                        //tnv.setTagValueBytes(aip.getCDASupportedString().getBytes(StandardCharsets.UTF_8));
+                        if (aip.isCardholderVerificationSupported()) {
+                            tnv.setTagValueBytes(new byte[] { (byte)0x01});
+                        } else {
+                            tnv.setTagValueBytes(new byte[] { (byte)0x00});
+                        }
+                        tagListTemp.add(tnv);*/
+                    }
+
 
                 }
             } else {
@@ -275,6 +371,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
                 List<TagNameValue> tagListApduGetProcessingOptionsVisaResponse = new ArrayList<TagNameValue>();
                 String contentApduGetProcessingOptionsVisaResponse = parseAndPrintApduRespond(apduGetProcessingOptionsVisaResponse, tagListApduGetProcessingOptionsVisaResponse);
                 content = content + "\n" + contentApduGetProcessingOptionsVisaResponse;
+                tagListTemp.addAll(tagListApduGetProcessingOptionsVisaResponse);
             } else {
                 content = content + "\n" + "no apduGetProcessingOptionsVisaResponse available" + "\n";
             }
@@ -294,7 +391,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
 
         content = content + "\n" + "------------------------\n";
 
-        content = content + "\n" + "\n" + " === Deep analyzis of card data END ===";
+        content = content + "\n" + "\n" + " === Deep analyze of card data END ===";
 
         content = content + "\n" + "";
 
@@ -342,23 +439,33 @@ public class ImportModelFileActivity extends AppCompatActivity {
     public static String printTableTags(List<TagNameValue> tagList) {
         String output = "";
         StringBuilder buf = new StringBuilder();
-        buf.append("Tag  Name    Value\n");
-        buf.append("------------------------------------\n");
+        buf.append("Tag   Name                            Value\n");
+        buf.append("--------------------------------------------------------------\n");
         int tagListSize = tagList.size();
         for (int i = 0; i < tagListSize; i++) {
             TagNameValue tag = tagList.get(i);
-            buf.append(TlvUtil.prettyPrintHex(BytesUtils.bytesToString(tag.getTagBytes()), 0, false));
+            buf.append(rightpad(BytesUtils.bytesToString(tag.getTagBytes()), 5));
             buf.append(" ");
-            buf.append(tag.getTagName());
+            buf.append(rightpad(tag.getTagName(), 31));
             buf.append(" ");
-            buf.append(BytesUtils.bytesToString(tag.getTagValueBytes()));
-            buf.append("###\n");
+            buf.append(rightpad(BytesUtils.bytesToStringNoSpace(tag.getTagValueBytes(), false), 25));
+            buf.append("\n");
             //output = output + buf.toString();
         }
         return buf.toString();
         //return output;
     }
 
+    // This code will have exactly the given amount of characters; filled with spaces or truncated
+    // on the right side
+    // source: https://stackoverflow.com/a/38110257/8166854
+    private static String leftpad(String text, int length) {
+        return String.format("%" + length + "." + length + "s", text);
+    }
+
+    private static String rightpad(String text, int length) {
+        return String.format("%-" + length + "." + length + "s", text);
+    }
 
     public static String printTagNameValue(TagNameValue tag) {
         String output = "";
@@ -432,6 +539,16 @@ public class ImportModelFileActivity extends AppCompatActivity {
         } finally {
             IOUtils.closeQuietly(stream);
         }
+    }
+
+    private byte[] getTagValue(byte[] data, ITag iTag) {
+        byte[] responseData = null;
+        List<TLV> listTlv = TlvUtil.getlistTLV(data, iTag);
+        if (listTlv.size() != 0) {
+            TLV tag = listTlv.get(0); // only one value
+            responseData = tag.getValueBytes();
+        }
+        return responseData;
     }
 
     private boolean getPan(byte[] data, EmvCardDetail emvCardDetail) {
