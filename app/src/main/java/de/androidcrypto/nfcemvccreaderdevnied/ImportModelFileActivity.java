@@ -94,6 +94,10 @@ public class ImportModelFileActivity extends AppCompatActivity {
         aids = emvCardAids.getAids();
         emvCardSingleAids = emvCardAids.getEmvCardSingleAids();
         int aidsSize = aids.size();
+
+        List<TagNameValue> tagListTemp = new ArrayList<TagNameValue>();
+
+
 /*
         content = content + "\n" + "The model contains data for " + aidsSize + " aids\n";
         for (int i = 0; i < aidsSize; i++) {
@@ -226,14 +230,17 @@ public class ImportModelFileActivity extends AppCompatActivity {
             byte[] apduSelectPpseResponse = emvCardSingleAid.getApduSelectPpseResponse();
             List<TagNameValue> tagListApduSelectPpseResponse = new ArrayList<TagNameValue>();
             String contentApduSelectPpseResponse = parseAndPrintApduRespond(apduSelectPpseResponse, tagListApduSelectPpseResponse);
-            tagApduResponse(apduSelectPpseResponse, 0, tagListApduSelectPpseResponse);
             content = content + "\n" + contentApduSelectPpseResponse;
+
+            tagListTemp.addAll(tagListApduSelectPpseResponse);
 
             content = content + "\n" + "== try to get all tags in apduSelectPidResponse ==";
             byte[] apduSelectPidResponse = emvCardSingleAid.getApduSelectPidResponse();
             List<TagNameValue> tagListApduSelectPidResponse = new ArrayList<TagNameValue>();
             String contentApduSelectPidResponse = parseAndPrintApduRespond(apduSelectPidResponse, tagListApduSelectPidResponse);
             content = content + "\n" + contentApduSelectPidResponse;
+
+
 
             content = content + "\n" + "== try to get all tags in apduGetProcessingOptionsResponse ==";
             byte[] apduGetProcessingOptionsResponse = emvCardSingleAid.getApduGetProcessingOptionsResponse();
@@ -290,6 +297,20 @@ public class ImportModelFileActivity extends AppCompatActivity {
         content = content + "\n" + "\n" + " === Deep analyzis of card data END ===";
 
         content = content + "\n" + "";
+
+
+        content = content + "\n" + "------------------------\n";
+        content = content + "\n" + "tablePrint of tagListApduSelectPpseRespone";
+        content = content + "\n" + "size of tagListTemp: " + tagListTemp.size();
+        content = content + "\n" + printTableTags(tagListTemp);
+
+
+
+
+        content = content + "\n" + "------------------------\n";
+
+
+
         content = content + "\n" + "------------------------\n";
         content = content + "\n" + "";
         content = content + "\n" + "";
@@ -317,6 +338,27 @@ public class ImportModelFileActivity extends AppCompatActivity {
         }
         return output;
     }
+
+    public static String printTableTags(List<TagNameValue> tagList) {
+        String output = "";
+        StringBuilder buf = new StringBuilder();
+        buf.append("Tag  Name    Value\n");
+        buf.append("------------------------------------\n");
+        int tagListSize = tagList.size();
+        for (int i = 0; i < tagListSize; i++) {
+            TagNameValue tag = tagList.get(i);
+            buf.append(TlvUtil.prettyPrintHex(BytesUtils.bytesToString(tag.getTagBytes()), 0, false));
+            buf.append(" ");
+            buf.append(tag.getTagName());
+            buf.append(" ");
+            buf.append(BytesUtils.bytesToString(tag.getTagValueBytes()));
+            buf.append("###\n");
+            //output = output + buf.toString();
+        }
+        return buf.toString();
+        //return output;
+    }
+
 
     public static String printTagNameValue(TagNameValue tag) {
         String output = "";
