@@ -1,14 +1,5 @@
 package de.androidcrypto.nfcemvccreaderdevnied;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
@@ -23,20 +14,27 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.github.devnied.emvnfccard.enums.SwEnum;
 import com.github.devnied.emvnfccard.enums.TagValueTypeEnum;
 import com.github.devnied.emvnfccard.exception.TlvException;
 import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
 import com.github.devnied.emvnfccard.iso7816emv.ITag;
 import com.github.devnied.emvnfccard.iso7816emv.TLV;
-import com.github.devnied.emvnfccard.iso7816emv.TagAndLength;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import net.sf.scuba.tlv.TLVInputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -45,14 +43,13 @@ import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardDetail;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import de.androidcrypto.nfcemvccreaderdevnied.model.TagNameValue;
 import fr.devnied.bitlib.BytesUtils;
 
-public class ImportModelFileActivity extends AppCompatActivity {
+public class ImportModelFileActivityV2 extends AppCompatActivity {
 
     Context contextSave;
     TextView readResult;
@@ -337,10 +334,14 @@ public class ImportModelFileActivity extends AppCompatActivity {
     }
 
     public static void tagApduResponse(final byte[] data, final int indentLength, List<TagNameValue> tagList) {
+        //List<TagNameValue> tagList = new ArrayList<TagNameValue>();
+        //StringBuilder buf = new StringBuilder();
         TLVInputStream stream = new TLVInputStream(new ByteArrayInputStream(data));
+
         try {
             while (stream.available() > 0) {
-                 if (stream.available() == 2) {
+                //buf.append("\n");
+                if (stream.available() == 2) {
                     stream.mark(0);
                     byte[] value = new byte[2];
                     try {
@@ -349,21 +350,28 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     }
                     SwEnum sw = SwEnum.getSW(value);
                     if (sw != null) {
+                        //buf.append(getSpaces(0));
+                        //buf.append(BytesUtils.bytesToString(value)).append(" -- ");
+                        //buf.append(sw.getDetail());
                         continue;
                     }
                     stream.reset();
                 }
+                //buf.append(getSpaces(indentLength));
                 TLV tlv = TlvUtil.getNextTLV(stream);
 
                 if (tlv == null) {
+                    //buf.setLength(0);
                     System.out.println("ERROR: TLV format error");
                     // LOGGER.debug("TLV format error");
                     break;
                 }
+
                 byte[] tagBytes = tlv.getTagBytes();
                 byte[] lengthBytes = tlv.getRawEncodedLengthBytes();
                 byte[] valueBytes = tlv.getValueBytes();
                 ITag tag = tlv.getTag();
+
                 TagNameValue tagNameValue = new TagNameValue();
                 tagNameValue.setTagBytes(tlv.getTagBytes());
                 tagNameValue.setTagName(tlv.getTag().getName());
@@ -374,22 +382,45 @@ public class ImportModelFileActivity extends AppCompatActivity {
                 tagNameValue.setTagDescription(tag.getDescription());
                 tagList.add(tagNameValue);
 
+                //buf.append(prettyPrintHex(tagBytes));
+                //buf.append(" ");
+                //buf.append(prettyPrintHex(lengthBytes));
+                //buf.append(" -- ");
+                //buf.append(tag.getName());
+
                 int extraIndent = (lengthBytes.length + tagBytes.length) * 3;
 
                 if (tag.isConstructed()) {
+                    // indentLength += extraIndent; //TODO check this
                     // Recursion
+                    //buf.append(prettyPrintAPDUResponse(valueBytes, indentLength + extraIndent));
+                    //buf.append(itagAPDUResponseNext(valueBytes, indentLength + extraIndent, iTagList));
                     tagApduResponse(valueBytes, indentLength + extraIndent, tagList);
+                } else {
+                    //buf.append("\n");
+                    if (tag.getTagValueType() == TagValueTypeEnum.DOL) {
+                        //buf.append(TlvUtil.getFormattedTagAndLength(valueBytes, indentLength + extraIndent));
+                    } else {
+                        //buf.append(getSpaces(indentLength + extraIndent));
+                        //buf.append(prettyPrintHex(BytesUtils.bytesToStringNoSpace(valueBytes), indentLength + extraIndent));
+                        //buf.append(" (");
+                        //buf.append(getTagValueAsString(tag, valueBytes));
+                        //buf.append(")");
+                    }
                 }
             }
         } catch (IOException e) {
             System.out.println("Error: " + e);
             //LOGGER.error(e.getMessage(), e);
         } catch (TlvException exce) {
+            //buf.setLength(0);
             System.out.println("ERROR TlvException: " + exce);
             //LOGGER.debug(exce.getMessage(), exce);
         } finally {
             IOUtils.closeQuietly(stream);
         }
+        //return buf.toString();
+        //return tagList;
     }
 
     private boolean getPan(byte[] data, EmvCardDetail emvCardDetail) {
@@ -518,7 +549,8 @@ public class ImportModelFileActivity extends AppCompatActivity {
         return emvCardAidsImport;
     }
 
-    // todo use another menu - no export / import of a model file but export / import tagList file
+
+    // todo use a smaller menu - no export / import of a model file
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_activity_main, menu);
