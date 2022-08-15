@@ -1,14 +1,5 @@
 package de.androidcrypto.nfcemvccreaderdevnied;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
@@ -23,49 +14,47 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.github.devnied.emvnfccard.enums.SwEnum;
-import com.github.devnied.emvnfccard.enums.TagTypeEnum;
 import com.github.devnied.emvnfccard.enums.TagValueTypeEnum;
 import com.github.devnied.emvnfccard.exception.TlvException;
 import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
 import com.github.devnied.emvnfccard.iso7816emv.ITag;
 import com.github.devnied.emvnfccard.iso7816emv.TLV;
-import com.github.devnied.emvnfccard.iso7816emv.TagAndLength;
-import com.github.devnied.emvnfccard.model.EmvTrack2;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
-import com.github.devnied.emvnfccard.utils.TrackUtils;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import net.sf.scuba.tlv.TLVInputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardDetail;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import de.androidcrypto.nfcemvccreaderdevnied.model.TagNameValue;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.ApplicationInterchangeProfile;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.CVMList;
-import de.androidcrypto.nfcemvccreaderdevnied.utils.DateUtils;
 import fr.devnied.bitlib.BytesUtils;
 
-public class ImportModelFileActivity extends AppCompatActivity {
+public class ImportModelFileActivityV3 extends AppCompatActivity {
 
     Context contextSave;
     TextView readResult;
-    SwitchMaterial showTagDetailData;
-    SwitchMaterial showTagDetailDeepData;
     SwitchMaterial addCommandResponseData;
     EmvCardAids emvCardAids;
     List<byte[]> aids = new ArrayList<byte[]>();
@@ -82,8 +71,6 @@ public class ImportModelFileActivity extends AppCompatActivity {
         contextSave = getApplicationContext();
         readResult = findViewById(R.id.tvImportReadResult);
         addCommandResponseData = findViewById(R.id.swImportAddCommandResponseDataSwitch);
-        showTagDetailData = findViewById(R.id.swImportShowTagDetailDataSwitch);
-        showTagDetailDeepData = findViewById(R.id.swImportShowTagDetailDeepDataSwitch);
 
         Button btnImport = findViewById(R.id.btnImportFile);
         btnImport.setOnClickListener(new View.OnClickListener() {
@@ -97,8 +84,6 @@ public class ImportModelFileActivity extends AppCompatActivity {
     // this method is called from fileLoaderActivityResultLauncher
     public void analyzeData() {
         // when this method is called a model file was loaded into emvCardAids;
-        boolean isShowTagDetailData = showTagDetailData.isChecked();
-        boolean isShowTagDetailDeepData = showTagDetailDeepData.isChecked();
         boolean isAddCommandResponseData = addCommandResponseData.isChecked();
         List<EmvCardSingleAid> emvCardSingleAids = new ArrayList<EmvCardSingleAid>();
         List<byte[]> aids = new ArrayList<byte[]>();
@@ -111,100 +96,100 @@ public class ImportModelFileActivity extends AppCompatActivity {
 
         List<TagNameValue> tagListTemp = new ArrayList<TagNameValue>();
 
-        if (isShowTagDetailData) {
-            content = content + "\n" + "The model contains data for " + aidsSize + " aids\n";
-            for (int i = 0; i < aidsSize; i++) {
-                selectedAid = aids.get(i);
-                emvCardSingleAid = emvCardSingleAids.get(i);
-                content = content + "\n" + "aid nr " + (i + 1) + " : " + BytesUtils.bytesToString(selectedAid);
 
-                content = content + "\n" + "step 01: select PPSE";
-                if (isAddCommandResponseData) {
-                    content = content + "\n" + "apduSelectPpseCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPpseCommand());
-                    content = content + "\n" + "apduSelectPpseResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPpseResponse());
-                }
-                content = content + "\n" + "apduSelectPpseParsed:\n" + emvCardSingleAid.getApduSelectPpseParsed();
-                content = content + "\n" + "------------------------\n";
+/*
+        content = content + "\n" + "The model contains data for " + aidsSize + " aids\n";
+        for (int i = 0; i < aidsSize; i++) {
+            selectedAid = aids.get(i);
+            emvCardSingleAid = emvCardSingleAids.get(i);
+            content = content + "\n" + "aid nr " + (i + 1) + " : " + BytesUtils.bytesToString(selectedAid);
 
-                content = content + "\n" + "step 02: take one AID";
-                content = content + "\n" + "selectedAid: " + BytesUtils.bytesToString(selectedAid);
-                content = content + "\n" + "------------------------\n";
+            content = content + "\n" + "step 01: select PPSE";
+            if (isAddCommandResponseData) {
+                content = content + "\n" + "apduSelectPpseCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPpseCommand());
+                content = content + "\n" + "apduSelectPpseResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPpseResponse());
+            }
+            content = content + "\n" + "apduSelectPpseParsed:\n" + emvCardSingleAid.getApduSelectPpseParsed();
+            content = content + "\n" + "------------------------\n";
 
-                content = content + "\n" + "step 03: select AID";
-                if (isAddCommandResponseData) {
-                    content = content + "\n" + "apduSelectPidCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidCommand());
-                    content = content + "\n" + "apduSelectPidResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidResponse());
-                }
-                content = content + "\n" + "apduSelectPidParsed:\n" + emvCardSingleAid.getApduSelectPidParsed();
-                content = content + "\n" + "------------------------\n";
+            content = content + "\n" + "step 02: take one AID";
+            content = content + "\n" + "selectedAid: " + BytesUtils.bytesToString(selectedAid);
+            content = content + "\n" + "------------------------\n";
 
-                content = content + "\n" + "step 04: get Processing Options (PDOL)";
-                if (isAddCommandResponseData) {
-                    content = content + "\n" + "apduGetProcessingOptionsCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsCommand());
-                    content = content + "\n" + "apduGetProcessingOptionsResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsResponse());
-                }
-                content = content + "\n" + "apduGetProcessingOptionsParsed:\n" + emvCardSingleAid.getApduGetProcessingOptionsParsed();
-                content = content + "\n" + "apduGetProcessingOptionsSucceed: " + emvCardSingleAid.isGetProcessingOptionsSucceed();
-                if (!emvCardSingleAid.isGetProcessingOptionsSucceed()) {
-                    // this seems to be a VISA card that provides no AFL data - we need to use another PDOL command
-                    content = content + "\n" + "The card seems to be VISA card that dows not provide an AFL";
-                    if (isAddCommandResponseData) {
-                        content = content + "\n" + "apduGetProcessingOptionsVisaCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaCommand());
-                        content = content + "\n" + "apduGetProcessingOptionsVisaResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaResponse());
-                    }
-                    content = content + "\n" + "apduGetProcessingOptionsVisaParsed:\n" + emvCardSingleAid.getApduGetProcessingOptionsVisaParsed();
-                    content = content + "\n" + "apduGetProcessingOptionsVisaSucceed: " + emvCardSingleAid.isGetProcessingOptionsVisaSucceed();
-                }
-                content = content + "\n" + "------------------------\n";
+            content = content + "\n" + "step 03: select AID";
+            if (isAddCommandResponseData) {
+                content = content + "\n" + "apduSelectPidCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidCommand());
+                content = content + "\n" + "apduSelectPidResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidResponse());
+            }
+            content = content + "\n" + "apduSelectPidParsed:\n" + emvCardSingleAid.getApduSelectPidParsed();
+            content = content + "\n" + "------------------------\n";
 
-                content = content + "\n" + "step 05: parse PDOL and GPO";
+            content = content + "\n" + "step 04: get Processing Options (PDOL)";
+            if (isAddCommandResponseData) {
+                content = content + "\n" + "apduGetProcessingOptionsCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsCommand());
+                content = content + "\n" + "apduGetProcessingOptionsResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsResponse());
+            }
+            content = content + "\n" + "apduGetProcessingOptionsParsed:\n" + emvCardSingleAid.getApduGetProcessingOptionsParsed();
+            content = content + "\n" + "apduGetProcessingOptionsSucceed: " + emvCardSingleAid.isGetProcessingOptionsSucceed();
+            if (!emvCardSingleAid.isGetProcessingOptionsSucceed()) {
+                // this seems to be a VISA card that provides no AFL data - we need to use another PDOL command
+                content = content + "\n" + "The card seems to be VISA card that dows not provide an AFL";
                 if (isAddCommandResponseData) {
-                    content = content + "\n" + "MessageTemplate1Response: " + BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate1());
+                    content = content + "\n" + "apduGetProcessingOptionsVisaCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaCommand());
+                    content = content + "\n" + "apduGetProcessingOptionsVisaResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaResponse());
                 }
-                content = content + "\n" + "MessageTemplate1Parsed:\n" + emvCardSingleAid.getResponseMessageTemplate1Parsed();
-                if (isAddCommandResponseData) {
-                    content = content + "\n" + "MessageTemplate2Response: " + BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate2());
-                }
-                content = content + "\n" + "MessageTemplate2Parsed:\n" + emvCardSingleAid.getResponseMessageTemplate2Parsed();
-                if (isAddCommandResponseData) {
-                    content = content + "\n" + "applicationFileLocatorResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApplicationFileLocator());
-                }
-                content = content + "\n" + "applicationFileLocatorParsed:\n" + emvCardSingleAid.getApplicationFileLocatorParsed();
-                content = content + "\n" + "------------------------\n";
+                content = content + "\n" + "apduGetProcessingOptionsVisaParsed:\n" + emvCardSingleAid.getApduGetProcessingOptionsVisaParsed();
+                content = content + "\n" + "apduGetProcessingOptionsVisaSucceed: " + emvCardSingleAid.isGetProcessingOptionsVisaSucceed();
+            }
+            content = content + "\n" + "------------------------\n";
 
-                content = content + "\n" + "step 06: read records from AFL";
-                List<Afl> afls;
-                Afl afl;
+            content = content + "\n" + "step 05: parse PDOL and GPO";
+            if (isAddCommandResponseData) {
+                content = content + "\n" + "MessageTemplate1Response: " + BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate1());
+            }
+            content = content + "\n" + "MessageTemplate1Parsed:\n" + emvCardSingleAid.getResponseMessageTemplate1Parsed();
+            if (isAddCommandResponseData) {
+                content = content + "\n" + "MessageTemplate2Response: " + BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate2());
+            }
+            content = content + "\n" + "MessageTemplate2Parsed:\n" + emvCardSingleAid.getResponseMessageTemplate2Parsed();
+            if (isAddCommandResponseData) {
+                content = content + "\n" + "applicationFileLocatorResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApplicationFileLocator());
+            }
+            content = content + "\n" + "applicationFileLocatorParsed:\n" + emvCardSingleAid.getApplicationFileLocatorParsed();
+            content = content + "\n" + "------------------------\n";
+
+            content = content + "\n" + "step 06: read records from AFL";
+            List<Afl> afls;
+            Afl afl;
                 List<byte[]> apduReadRecordsCommand = emvCardSingleAid.getApduReadRecordsCommand();
                 List<byte[]> apduReadRecordsResponse = emvCardSingleAid.getApduReadRecordsResponse();
                 List<String> apduReadRecordsResponseParsed = emvCardSingleAid.getApduReadRecordsResponseParsed();
                 //afls = emvCardSingleAid.getAfls();
                 //int aflsSize = afls.size();
-                if (apduReadRecordsCommand != null) {
-                    int apduReadRecordsCommandSize = apduReadRecordsCommand.size();
-                    content = content + "\n" + "we do have " + apduReadRecordsCommandSize + " entries to read\n";
-                    for (int j = 0; j < apduReadRecordsCommandSize; j++) {
-                        content = content + "\n" + "get data from record " + (j + 1);
-                        if (isAddCommandResponseData) {
-                            byte[] apduReadRecordCommand = apduReadRecordsCommand.get(j);
-                            byte[] apduReadRecordResponse = apduReadRecordsResponse.get(j);
-                            content = content + "\n" + "apduReadRecordCommand:  " + BytesUtils.bytesToString(apduReadRecordCommand);
-                            content = content + "\n" + "apduReadRecordResponse: " + BytesUtils.bytesToString(apduReadRecordResponse);
-                        }
-                        String apduReadRecordResponseParsed = apduReadRecordsResponseParsed.get(j);
-                        content = content + "\n" + "apduReadRecordParsed:\n" + apduReadRecordResponseParsed;
-                        content = content + "\n" + "------------------------\n";
+            if (apduReadRecordsCommand != null) {
+                int apduReadRecordsCommandSize = apduReadRecordsCommand.size();
+                content = content + "\n" + "we do have " + apduReadRecordsCommandSize + " entries to read\n";
+                for (int j = 0; j < apduReadRecordsCommandSize; j++) {
+                    content = content + "\n" + "get data from record " + (j + 1);
+                    if (isAddCommandResponseData) {
+                        byte[] apduReadRecordCommand = apduReadRecordsCommand.get(j);
+                        byte[] apduReadRecordResponse = apduReadRecordsResponse.get(j);
+                        content = content + "\n" + "apduReadRecordCommand:  " + BytesUtils.bytesToString(apduReadRecordCommand);
+                        content = content + "\n" + "apduReadRecordResponse: " + BytesUtils.bytesToString(apduReadRecordResponse);
                     }
-                } else {
-                    content = content + "\n" + "There is no AFL record available";
+                    String apduReadRecordResponseParsed = apduReadRecordsResponseParsed.get(j);
+                    content = content + "\n" + "apduReadRecordParsed:\n" + apduReadRecordResponseParsed;
+                    content = content + "\n" + "------------------------\n";
                 }
-                content = content + "\n" + "";
-                content = content + "\n" + "------------------------\n";
-            } // this is the basic content
-        }
+            } else {
+                content = content + "\n" + "There is no AFL record available";
+            }
+            content = content + "\n" + "";
+            content = content + "\n" + "------------------------\n";
+        } // this is the basic content
+*/
 
         // lets analyze the data deeper
-        //if (isShowTagDetailDeepData) {
         content = content + "\n" + "\n" + " === Deep analyze of card data ===";
         content = content + "\n" + "The model contains data for " + aidsSize + " aids\n";
         for (int i = 0; i < aidsSize; i++) {
@@ -212,22 +197,48 @@ public class ImportModelFileActivity extends AppCompatActivity {
             emvCardSingleAid = emvCardSingleAids.get(i);
             content = content + "\n" + "aid nr " + (i + 1) + " : " + BytesUtils.bytesToString(selectedAid);
 
+            // get the card number (PAN) from several available sources
+            /*
+            The 8 Byte (16 Digit) code printed on Smart Card (Payment Chip Card) is retrievable.
+            This information is the part of "Track 2 Equivalent Data" personalized in the records
+            in Tag 57.
+            You can slice the initial 8 Bytes of this "Track 2 Equivalent Data" to get your code.
+             */
+/*
+            List<byte[]> apduReadRecordsResponse = emvCardSingleAid.getApduReadRecordsResponse();
+            List<String> apduReadRecordsResponseParsed = emvCardSingleAid.getApduReadRecordsResponseParsed();
+            if (apduReadRecordsResponse != null) {
+                int apduReadRecordsResponseSize = apduReadRecordsResponse.size();
+                content = content + "\n" + "we do have " + apduReadRecordsResponseSize + " entries to read\n";
+                for (int j = 0; j < apduReadRecordsResponseSize; j++) {
+                    content = content + "\n" + "get data from record " + (j + 1);
+                    byte[] apduReadRecordResponse = apduReadRecordsResponse.get(j);
+                    String apduReadRecordsResponseParsedString = apduReadRecordsResponseParsed.get(j);
+                    content = content + "\n" + "apduReadRecordResponse: " + BytesUtils.bytesToString(apduReadRecordResponse);
+                    content = content + "\n" + "apduReadRecordParsed:\n" + apduReadRecordsResponseParsedString;
+                    List<TLV> listTlvPan = TlvUtil.getlistTLV(apduReadRecordResponse, EmvTags.PAN);
+                    if (listTlvPan.size() != 0) {
+                        TLV tagPan = listTlvPan.get(0);
+                        byte[] pan = tagPan.getValueBytes();
+                        content = content + "\n" + "PAN: " + BytesUtils.bytesToString(pan);
+                    } else {
+                        content = content + "\n" + "NO PAN found";
+                    }
+*/
             content = content + "\n" + "== try to get all tags in apduSelectPpseResponse ==";
             byte[] apduSelectPpseResponse = emvCardSingleAid.getApduSelectPpseResponse();
             List<TagNameValue> tagListApduSelectPpseResponse = new ArrayList<TagNameValue>();
             String contentApduSelectPpseResponse = parseAndPrintApduRespond(apduSelectPpseResponse, tagListApduSelectPpseResponse);
-            if (isShowTagDetailDeepData) {
-                content = content + "\n" + contentApduSelectPpseResponse;
-            }
+            content = content + "\n" + contentApduSelectPpseResponse;
+
             tagListTemp.addAll(tagListApduSelectPpseResponse);
 
             content = content + "\n" + "== try to get all tags in apduSelectPidResponse ==";
             byte[] apduSelectPidResponse = emvCardSingleAid.getApduSelectPidResponse();
             List<TagNameValue> tagListApduSelectPidResponse = new ArrayList<TagNameValue>();
             String contentApduSelectPidResponse = parseAndPrintApduRespond(apduSelectPidResponse, tagListApduSelectPidResponse);
-            if (isShowTagDetailDeepData) {
-                content = content + "\n" + contentApduSelectPidResponse;
-            }
+            content = content + "\n" + contentApduSelectPidResponse;
+
             tagListTemp.addAll(tagListApduSelectPidResponse);
 
             content = content + "\n" + "== try to get all tags in apduGetProcessingOptionsResponse ==";
@@ -235,10 +246,49 @@ public class ImportModelFileActivity extends AppCompatActivity {
             if (apduGetProcessingOptionsResponse != null) {
                 List<TagNameValue> tagListApduGetProcessingOptionsResponse = new ArrayList<TagNameValue>();
                 String contentApduGetProcessingOptionsResponse = parseAndPrintApduRespond(apduGetProcessingOptionsResponse, tagListApduGetProcessingOptionsResponse);
-                if (isShowTagDetailDeepData) {
-                    content = content + "\n" + contentApduGetProcessingOptionsResponse;
-                }
+                content = content + "\n" + contentApduGetProcessingOptionsResponse;
                 tagListTemp.addAll(tagListApduGetProcessingOptionsResponse);
+
+                // search for tag 82 = Application Interchange Profile (e.g. "19 80")
+                byte[] aipByte = getTagValue(apduGetProcessingOptionsResponse, EmvTags.APPLICATION_INTERCHANGE_PROFILE);
+                content = content + "\n" + "== Application Interchange Profile data ==";
+                if (aipByte != null) {
+                    ApplicationInterchangeProfile aip =
+                            new ApplicationInterchangeProfile(aipByte[0], aipByte[1]);
+                    content = content + "\n" + aip.getCDASupportedString();
+                    content = content + "\n" + aip.getSDASupportedString();
+                    content = content + "\n" + aip.getDDASupportedString();
+                    content = content + "\n" + aip.getIssuerAuthenticationIsSupportedString();
+                    content = content + "\n" + aip.getTerminalRiskManagementToBePerformedString();
+                    content = content + "\n" + aip.getCardholderVerificationSupportedString();
+                    content = content + "\n" + "== Application Interchange Profile data ==\n";
+                    // build a new tag
+                    TagNameValue tnv = new TagNameValue();
+                    tnv.setTagBytes(new byte[] {
+                            (byte)0xff, 0x01});
+                    tnv.setTagName("AIP CDA Support");
+                    tnv.setTagValueType(TagValueTypeEnum.TEXT.toString());
+                    //tnv.setTagValueBytes(aip.getCDASupportedString().getBytes(StandardCharsets.UTF_8));
+                    if (aip.isCDASupported()) {
+                        tnv.setTagValueBytes(new byte[] { (byte)0x01});
+                    } else {
+                        tnv.setTagValueBytes(new byte[] { (byte)0x00});
+                    }
+                    tagListTemp.add(tnv);
+
+                    tnv = new TagNameValue();
+                    tnv.setTagBytes(new byte[] {
+                            (byte)0xff, 0x06});
+                    tnv.setTagName("AIP Cardholder Verification Support");
+                    tnv.setTagValueType(TagValueTypeEnum.TEXT.toString());
+                    //tnv.setTagValueBytes(aip.getCDASupportedString().getBytes(StandardCharsets.UTF_8));
+                    if (aip.isCardholderVerificationSupported()) {
+                        tnv.setTagValueBytes(new byte[] { (byte)0x01});
+                    } else {
+                        tnv.setTagValueBytes(new byte[] { (byte)0x00});
+                    }
+                    tagListTemp.add(tnv);
+                }
 
             } else {
                 content = content + "\n" + "no apduGetProcessingOptionsResponse available" + "\n";
@@ -254,10 +304,9 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     byte[] apduReadRecordResponse = apduReadRecordsResponse.get(k);
                     List<TagNameValue> tagListApduReadRecordResponse = new ArrayList<TagNameValue>();
                     String contentApduReadRecordResponse = parseAndPrintApduRespond(apduReadRecordResponse, tagListApduReadRecordResponse);
-                    if (isShowTagDetailDeepData) {
-                        content = content + "\n" + contentApduReadRecordResponse;
-                    }
+                    content = content + "\n" + contentApduReadRecordResponse;
                     tagListTemp.addAll(tagListApduReadRecordResponse);
+
 
                 }
             } else {
@@ -269,9 +318,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
             if (apduGetProcessingOptionsVisaResponse != null) {
                 List<TagNameValue> tagListApduGetProcessingOptionsVisaResponse = new ArrayList<TagNameValue>();
                 String contentApduGetProcessingOptionsVisaResponse = parseAndPrintApduRespond(apduGetProcessingOptionsVisaResponse, tagListApduGetProcessingOptionsVisaResponse);
-                if (isShowTagDetailDeepData) {
-                    content = content + "\n" + contentApduGetProcessingOptionsVisaResponse;
-                }
+                content = content + "\n" + contentApduGetProcessingOptionsVisaResponse;
                 tagListTemp.addAll(tagListApduGetProcessingOptionsVisaResponse);
             } else {
                 content = content + "\n" + "no apduGetProcessingOptionsVisaResponse available" + "\n";
@@ -293,7 +340,6 @@ public class ImportModelFileActivity extends AppCompatActivity {
         content = content + "\n" + "------------------------\n";
 
         content = content + "\n" + "\n" + " === Deep analyze of card data END ===";
-        //}
 
         content = content + "\n" + "";
 
@@ -311,7 +357,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
         TagNameValue tnvAip = findTnv(EmvTags.APPLICATION_INTERCHANGE_PROFILE.getTagBytes(), tagListTemp);
         if (tnvAip != null) {
             byte[] aipByte = tnvAip.getTagValueBytes();
-            ApplicationInterchangeProfile aip =
+                    ApplicationInterchangeProfile aip =
                     new ApplicationInterchangeProfile(aipByte[0], aipByte[1]);
             content = content + "\n" + "== Application Interchange Profile data ==\n";
             content = content + "\n" + aip.getCDASupportedString();
@@ -324,19 +370,19 @@ public class ImportModelFileActivity extends AppCompatActivity {
             content = content + "\n" + "== Application Interchange Profile data end ==\n";
             // build new tags
             TagNameValue tnvNew = new TagNameValue();
-            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x01}, "AIP raw data", TagValueTypeEnum.BINARY, aipByte);
+            tnvNew = tagBuild(new byte[] {(byte)0xff, 0x01}, "AIP raw data", TagValueTypeEnum.BINARY, aipByte);
             tagListNew.add(tnvNew);
-            tnvNew = tagBuildBoolean(new byte[]{(byte) 0xff, 0x02}, "AIP CDA Support", TagValueTypeEnum.TEXT, aip.isCDASupported());
+            tnvNew = tagBuildBoolean(new byte[] {(byte)0xff, 0x02}, "AIP CDA Support", TagValueTypeEnum.TEXT, aip.isCDASupported());
             tagListNew.add(tnvNew);
-            tnvNew = tagBuildBoolean(new byte[]{(byte) 0xff, 0x03}, "AIP SDA Support", TagValueTypeEnum.TEXT, aip.isSDASupported());
+            tnvNew = tagBuildBoolean(new byte[] {(byte)0xff, 0x03}, "AIP SDA Support", TagValueTypeEnum.TEXT, aip.isSDASupported());
             tagListNew.add(tnvNew);
-            tnvNew = tagBuildBoolean(new byte[]{(byte) 0xff, 0x04}, "AIP DDA Support", TagValueTypeEnum.TEXT, aip.isDDASupported());
+            tnvNew = tagBuildBoolean(new byte[] {(byte)0xff, 0x04}, "AIP DDA Support", TagValueTypeEnum.TEXT, aip.isDDASupported());
             tagListNew.add(tnvNew);
-            tnvNew = tagBuildBoolean(new byte[]{(byte) 0xff, 0x05}, "AIP Issuer Authentication Support", TagValueTypeEnum.TEXT, aip.isIssuerAuthenticationIsSupported());
+            tnvNew = tagBuildBoolean(new byte[] {(byte)0xff, 0x05}, "AIP Issuer Authentication Support", TagValueTypeEnum.TEXT, aip.isIssuerAuthenticationIsSupported());
             tagListNew.add(tnvNew);
-            tnvNew = tagBuildBoolean(new byte[]{(byte) 0xff, 0x06}, "AIP Terminal Risk Management To Be Performed", TagValueTypeEnum.TEXT, aip.isTerminalRiskManagementToBePerformed());
+            tnvNew = tagBuildBoolean(new byte[] {(byte)0xff, 0x06}, "AIP Terminal Risk Management To Be Performed", TagValueTypeEnum.TEXT, aip.isTerminalRiskManagementToBePerformed());
             tagListNew.add(tnvNew);
-            tnvNew = tagBuildBoolean(new byte[]{(byte) 0xff, 0x07}, "AIP Cardholder Verification Support", TagValueTypeEnum.TEXT, aip.isCardholderVerificationSupported());
+            tnvNew = tagBuildBoolean(new byte[] {(byte)0xff, 0x07}, "AIP Cardholder Verification Support", TagValueTypeEnum.TEXT, aip.isCardholderVerificationSupported());
             tagListNew.add(tnvNew);
 
 
@@ -384,47 +430,12 @@ public class ImportModelFileActivity extends AppCompatActivity {
 
             // build new tags
             TagNameValue tnvNew = new TagNameValue();
-            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x11}, "CVM list raw data", TagValueTypeEnum.BINARY, cvmByte);
+            tnvNew = tagBuild(new byte[] {(byte)0xff, 0x11}, "CVM list raw data", TagValueTypeEnum.BINARY, cvmByte);
             tagListNew.add(tnvNew);
 
         } else {
             content = content + "\n" + "no Cardholder Verification Method (CVM) data available";
         }
-
-        // as some cards do not provide the pan, expireDate in a dedicated tag we need to analyze track1 or track2 data
-        // for visa cards it is mostly track2 equivalent data
-        content = content + "\n" + "\n" + "== Track2 equivalent data ==";
-        TagNameValue tnvT2ED = findTnv(EmvTags.TRACK_2_EQV_DATA.getTagBytes(), tagListTemp);
-        if (tnvT2ED != null) {
-            byte[] t2edByte = tnvT2ED.getTagValueBytes();
-            content = content + "\n" + "== Track2 equivalent data available ==";
-            EmvTrack2 emvTrack2 = TrackUtils.extractTrack2EquivalentData(t2edByte);
-            String cardNumber = emvTrack2.getCardNumber();
-            Date expireDate = emvTrack2.getExpireDate();
-            String expireDateString = DateUtils.getFormattedDateYyyy_Mm(expireDate);
-            content = content + "\n" + "CardNumber: " + cardNumber;
-            content = content + "\n" + "ExpireDate: " + expireDateString;
-            content = content + "\n" + "== == Track2 equivalent data ==";
-
-            // build new tags
-            TagNameValue tnvNew = new TagNameValue();
-            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x21}, "Track2 list raw data", TagValueTypeEnum.BINARY, t2edByte);
-            tagListNew.add(tnvNew);
-            // for credit cards the pan is allways even (8 bytes = 16 digits)
-            // some other cards like German's girocard may get a checknumber at the end so the card number string is odd
-            if (cardNumber.length() % 2 != 0) {
-                cardNumber = cardNumber + "0"; // for odd card numbers
-            }
-            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x22}, "Track2 PAN", TagValueTypeEnum.BINARY, BytesUtils.fromString(cardNumber));
-            tagListNew.add(tnvNew);
-
-            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x23}, "Track2 ExpireDate", TagValueTypeEnum.TEXT, expireDateString.getBytes(StandardCharsets.UTF_8));
-            tagListNew.add(tnvNew);
-        } else {
-            content = content + "\n" + "no Track2 equivalent data available";
-        }
-
-
 
         content = content + "\n" + "------------------------\n";
 
@@ -505,9 +516,9 @@ public class ImportModelFileActivity extends AppCompatActivity {
         tnv.setTagName(tagName);
         tnv.setTagValueType(tvtEnum.toString());
         if (valueBoolean) {
-            tnv.setTagValueBytes(new byte[]{(byte) 0x01}); // true = 1
+            tnv.setTagValueBytes(new byte[] { (byte)0x01}); // true = 1
         } else {
-            tnv.setTagValueBytes(new byte[]{(byte) 0x00}); // false = 0
+            tnv.setTagValueBytes(new byte[] { (byte)0x00}); // false = 0
         }
         return tnv;
     }
@@ -532,7 +543,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
         String tagValueType = tag.getTagValueType();
         if (tagValueType == "TEXT") {
             output = output + "tag value bytes: " + BytesUtils.bytesToString(tag.getTagValueBytes()) +
-                    " (= " + new String(tag.getTagValueBytes()) + ")\n";
+                    " (= " + new String (tag.getTagValueBytes()) + ")\n";
         } else {
             output = output + "tag value bytes: " + BytesUtils.bytesToString(tag.getTagValueBytes()) + "\n";
         }
@@ -546,7 +557,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
         TLVInputStream stream = new TLVInputStream(new ByteArrayInputStream(data));
         try {
             while (stream.available() > 0) {
-                if (stream.available() == 2) {
+                 if (stream.available() == 2) {
                     stream.mark(0);
                     byte[] value = new byte[2];
                     try {
