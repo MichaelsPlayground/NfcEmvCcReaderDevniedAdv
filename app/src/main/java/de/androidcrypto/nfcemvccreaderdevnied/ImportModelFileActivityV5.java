@@ -1,14 +1,5 @@
 package de.androidcrypto.nfcemvccreaderdevnied;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
@@ -23,14 +14,21 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.github.devnied.emvnfccard.enums.SwEnum;
-import com.github.devnied.emvnfccard.enums.TagTypeEnum;
 import com.github.devnied.emvnfccard.enums.TagValueTypeEnum;
 import com.github.devnied.emvnfccard.exception.TlvException;
 import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
 import com.github.devnied.emvnfccard.iso7816emv.ITag;
 import com.github.devnied.emvnfccard.iso7816emv.TLV;
-import com.github.devnied.emvnfccard.iso7816emv.TagAndLength;
 import com.github.devnied.emvnfccard.model.EmvTrack2;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 import com.github.devnied.emvnfccard.utils.TrackUtils;
@@ -39,7 +37,6 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import net.sf.scuba.tlv.TLVInputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -60,7 +57,7 @@ import de.androidcrypto.nfcemvccreaderdevnied.utils.CVMList;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.DateUtils;
 import fr.devnied.bitlib.BytesUtils;
 
-public class ImportModelFileActivity extends AppCompatActivity {
+public class ImportModelFileActivityV5 extends AppCompatActivity {
 
     Context contextSave;
     TextView readResult;
@@ -285,14 +282,12 @@ public class ImportModelFileActivity extends AppCompatActivity {
             content = content + "\n" + "== Left Pin Try Counter ==";
             byte[] leftPinTryCounterResponse = emvCardSingleAid.getCardLeftPinTryResponse();
             if (leftPinTryCounterResponse != null) {
-                byte[] data = TlvUtil.getValue(leftPinTryCounterResponse, EmvTags.PIN_TRY_COUNTER);
                 if (isShowTagDetailDeepData) {
-                    content = content + "\n" + BytesUtils.bytesToString(data);
+                    content = content + "\n" + BytesUtils.bytesToString(leftPinTryCounterResponse);
                 }
                 // build a new tag
-                // todo should we save it unter 9F 17 as well ?
                 TagNameValue tnvNew = new TagNameValue();
-                tnvNew = tagBuild(new byte[]{(byte) 0xfe, 0x01}, "PIN left try counter", TagValueTypeEnum.BINARY, data);
+                tnvNew = tagBuild(new byte[]{(byte) 0xfe, 0x01}, "PIN left try counter", TagValueTypeEnum.BINARY, leftPinTryCounterResponse);
                 tagListTemp.add(tnvNew);
             } else {
                 content = content + "\n" + "no leftPinTryCounterResponse available" + "\n";
@@ -301,14 +296,12 @@ public class ImportModelFileActivity extends AppCompatActivity {
             content = content + "\n" + "== ATC ==";
             byte[] atcResponse = emvCardSingleAid.getCardAtcResponse();
             if (atcResponse != null) {
-                byte[] data = TlvUtil.getValue(atcResponse, EmvTags.APP_TRANSACTION_COUNTER);
                 if (isShowTagDetailDeepData) {
-                    content = content + "\n" + BytesUtils.bytesToString(data);
+                    content = content + "\n" + BytesUtils.bytesToString(atcResponse);
                 }
                 // build a new tag
-                // todo should we save it unter 9F 36 as well ?
                 TagNameValue tnvNew = new TagNameValue();
-                tnvNew = tagBuild(new byte[]{(byte) 0xfe, 0x02}, "ATC", TagValueTypeEnum.BINARY, data);
+                tnvNew = tagBuild(new byte[]{(byte) 0xfe, 0x02}, "ATC", TagValueTypeEnum.BINARY, atcResponse);
                 tagListTemp.add(tnvNew);
             } else {
                 content = content + "\n" + "no atcResponse available" + "\n";
@@ -317,14 +310,12 @@ public class ImportModelFileActivity extends AppCompatActivity {
             content = content + "\n" + "== Last Online ATC ==";
             byte[] lastOnlineAtcResponse = emvCardSingleAid.getCardLastOnlineAtcResponse();
             if (lastOnlineAtcResponse != null) {
-                byte[] data = TlvUtil.getValue(lastOnlineAtcResponse, EmvTags.LAST_ONLINE_ATC_REGISTER);
                 if (isShowTagDetailDeepData) {
-                    content = content + "\n" + BytesUtils.bytesToString(data);
+                    content = content + "\n" + BytesUtils.bytesToString(lastOnlineAtcResponse);
                 }
                 // build a new tag
-                // todo should we save it unter 9F 13 as well ?
                 TagNameValue tnvNew = new TagNameValue();
-                tnvNew = tagBuild(new byte[]{(byte) 0xfe, 0x03}, "Last online ATC", TagValueTypeEnum.BINARY, data);
+                tnvNew = tagBuild(new byte[]{(byte) 0xfe, 0x03}, "Last online ATC", TagValueTypeEnum.BINARY, lastOnlineAtcResponse);
                 tagListTemp.add(tnvNew);
             } else {
                 content = content + "\n" + "no lastOnlineAtcResponse available" + "\n";
@@ -332,16 +323,14 @@ public class ImportModelFileActivity extends AppCompatActivity {
 
             content = content + "\n" + "== Log Format ==";
             byte[] logFormatResponse = emvCardSingleAid.getCardLogFormatResponse();
-            if (logFormatResponse != null) {
-                byte[] data = TlvUtil.getValue(logFormatResponse, EmvTags.LOG_FORMAT);
+            if (lastOnlineAtcResponse != null) {
                 if (isShowTagDetailDeepData) {
-                    content = content + "\n" + BytesUtils.bytesToString(data);
-                    content = content + "\n" + new String(data);
+                    content = content + "\n" + BytesUtils.bytesToString(lastOnlineAtcResponse);
+                    content = content + "\n" + new String(lastOnlineAtcResponse);
                 }
                 // build a new tag
-                // todo should we save it unter 9F 4F as well ?
                 TagNameValue tnvNew = new TagNameValue();
-                tnvNew = tagBuild(new byte[]{(byte) 0xfe, 0x04}, "Log Format", TagValueTypeEnum.TEXT, data);
+                tnvNew = tagBuild(new byte[]{(byte) 0xfe, 0x04}, "Log Format", TagValueTypeEnum.TEXT, logFormatResponse);
                 tagListTemp.add(tnvNew);
             } else {
                 content = content + "\n" + "no logFormatResponse available" + "\n";
@@ -370,8 +359,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
         content = content + "\n" + "------------------------\n";
         content = content + "\n" + "tablePrint of tagListTemp";
         content = content + "\n" + "size of tagListTemp: " + tagListTemp.size();
-        //content = content + "\n" + printTableTags(tagListTemp);
-        content = content + "\n" + printTableTagsText(tagListTemp);
+        content = content + "\n" + printTableTags(tagListTemp);
         content = content + "\n" + "------------------------\n";
 
         content = content + "\n" + "analyze some tag data";
@@ -505,19 +493,8 @@ public class ImportModelFileActivity extends AppCompatActivity {
         content = content + "\n" + "------------------------\n";
         content = content + "\n" + "tablePrint of tagListNew";
         content = content + "\n" + "size of tagListNew: " + tagListNew.size();
-        //content = content + "\n" + printTableTags(tagListNew);
-        content = content + "\n" + printTableTagsText(tagListNew);
+        content = content + "\n" + printTableTags(tagListNew);
         content = content + "\n" + "------------------------\n";
-
-/*
-
-Name	Description	Source	Format	Template	Tag	Length	P/C
-Personal Identification Number (PIN) Try Counter	Number of PIN tries remaining	ICC	b		9F17	1	primitive
-
-https://books.google.de/books?id=CtwvDwAAQBAJ&pg=PA188&lpg=PA188&dq=emv+left+pin+try&source=bl&ots=ZTE1QMxrrP&sig=ACfU3U3QewhDiXqnfmPaQT9zvEXidUJJ5Q&hl=de&sa=X&ved=2ahUKEwj1x6zW98r5AhUHr6QKHdE7C4sQ6AF6BAgCEAM#v=onepage&q=emv%20left%20pin%20try&f=false
-Implementing Electronic Card Payment Systems
-Cristian Radu
- */
 
 
         content = content + "\n" + "------------------------\n";
@@ -532,7 +509,7 @@ Cristian Radu
     }
 
     /**
-     * section for deep card analyzing end
+     * section for deep card analyzing
      */
 
     public static String parseAndPrintApduRespond(byte[] apduResponse, List<TagNameValue> tagList) {
@@ -546,40 +523,6 @@ Cristian Radu
                     printTagNameValue(tag);
         }
         return output;
-    }
-
-    /**
-     * this is the advanced version of printTableTags - if there is a TagValueType of TEXT the
-     * output line is repeated with a byte array to string conversion
-     *
-     * @param tagList
-     * @return
-     */
-    public static String printTableTagsText(List<TagNameValue> tagList) {
-        StringBuilder buf = new StringBuilder();
-        buf.append("Tag   Name                            Value\n");
-        buf.append("--------------------------------------------------------------\n");
-        int tagListSize = tagList.size();
-        for (int i = 0; i < tagListSize; i++) {
-            TagNameValue tag = tagList.get(i);
-            boolean isTagValueTypeText = (tag.getTagValueType().equals(TagValueTypeEnum.TEXT.toString()));
-            buf.append(rightpad(BytesUtils.bytesToString(tag.getTagBytes()), 5));
-            buf.append(" ");
-            buf.append(rightpad(tag.getTagName(), 31));
-            buf.append(" ");
-            buf.append(rightpad(BytesUtils.bytesToStringNoSpace(tag.getTagValueBytes(), false), 25));
-            buf.append("\n");
-            // if the type is TEXT repeat the line with byte to string converted data
-            if (isTagValueTypeText) {
-                buf.append(rightpad(BytesUtils.bytesToString(tag.getTagBytes()), 5));
-                buf.append(" ");
-                buf.append(rightpad(tag.getTagName(), 31));
-                buf.append(" ");
-                buf.append(rightpad(new String(tag.getTagValueBytes()), 25));
-                buf.append("\n");
-            }
-        }
-        return buf.toString();
     }
 
     public static String printTableTags(List<TagNameValue> tagList) {

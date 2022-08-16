@@ -241,8 +241,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     idContentString = idContentString + "\n" + "getData for LastOnlineAtc is not successfull";
                 }
 
-                getDataResponse = parser.getDataPinTryCounter();
-                idContentString = idContentString + "\n" + "getDataResponse for PinTryCounter";
+                getDataResponse = parser.getDataLeftPinTryCounter();
+                idContentString = idContentString + "\n" + "getDataResponse for LeftPinTryCounter";
                 if (getDataResponse != null) {
                     idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
                     idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
@@ -279,6 +279,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
 
                 // store the emvCardSingleAid in the "all" model
+                emvCardSingleAid.setIsParsingCompleted(true);
                 aids.add(selectedAid);
                 emvCardSingleAids.add(emvCardSingleAid);
             }

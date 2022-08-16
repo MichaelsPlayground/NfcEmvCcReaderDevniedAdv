@@ -61,9 +61,21 @@ public class EmvCardSingleAid implements Serializable {
     private String cardPan; // card number
     private String cardPanSequenceNumber;
     private String cardExpiresJjMm; // format JJMM
-    private int cardLeftPinTry;
     private String cardLabel;
-    // step 07 some special data on card
+    // step 07 some special data on card that need an extra get data command
+    private int cardLeftPinTry;
+    private byte[] cardLeftPinTryCommand;
+    private byte[] cardLeftPinTryResponse;
+
+    private byte[] cardAtcCommand;
+    private byte[] cardAtcResponse;
+
+    private byte[] cardLastOnlineAtcCommand;
+    private byte[] cardLastOnlineAtcResponse;
+
+    private byte[] cardLogFormatCommand;
+    private byte[] cardLogFormatResponse;
+
     private byte[] authorizationBytes; //
     private byte[] cvm; // cardholder verification
 
@@ -359,5 +371,69 @@ public class EmvCardSingleAid implements Serializable {
 
     public void setAfls(List<Afl> afls) {
         this.afls = afls;
+    }
+
+    public byte[] getCardLeftPinTryCommand() {
+        return cardLeftPinTryCommand;
+    }
+
+    public void setCardLeftPinTryCommand(byte[] cardLeftPinTryCommand) {
+        this.cardLeftPinTryCommand = cardLeftPinTryCommand;
+    }
+
+    public byte[] getCardLeftPinTryResponse() {
+        return cardLeftPinTryResponse;
+    }
+
+    public void setCardLeftPinTryResponse(byte[] cardLeftPinTryResponse) {
+        this.cardLeftPinTryResponse = cardLeftPinTryResponse;
+    }
+
+    public byte[] getCardAtcCommand() {
+        return cardAtcCommand;
+    }
+
+    public void setCardAtcCommand(byte[] cardAtcCommand) {
+        this.cardAtcCommand = cardAtcCommand;
+    }
+
+    public byte[] getCardAtcResponse() {
+        return cardAtcResponse;
+    }
+
+    public void setCardAtcResponse(byte[] cardAtcResponse) {
+        this.cardAtcResponse = cardAtcResponse;
+    }
+
+    public byte[] getCardLastOnlineAtcCommand() {
+        return cardLastOnlineAtcCommand;
+    }
+
+    public void setCardLastOnlineAtcCommand(byte[] cardLastOnlineAtcCommand) {
+        this.cardLastOnlineAtcCommand = cardLastOnlineAtcCommand;
+    }
+
+    public byte[] getCardLastOnlineAtcResponse() {
+        return cardLastOnlineAtcResponse;
+    }
+
+    public void setCardLastOnlineAtcResponse(byte[] cardLastOnlineAtcResponse) {
+        this.cardLastOnlineAtcResponse = cardLastOnlineAtcResponse;
+    }
+
+    public byte[] getCardLogFormatCommand() {
+        return cardLogFormatCommand;
+    }
+
+    public void setCardLogFormatCommand(byte[] cardLogFormatCommand) {
+        this.cardLogFormatCommand = cardLogFormatCommand;
+    }
+
+    public byte[] getCardLogFormatResponse() {
+        return cardLogFormatResponse;
+    }
+
+    public void setCardLogFormatResponse(byte[] cardLogFormatResponse) {
+        this.cardLogFormatResponse = cardLogFormatResponse;
     }
 }

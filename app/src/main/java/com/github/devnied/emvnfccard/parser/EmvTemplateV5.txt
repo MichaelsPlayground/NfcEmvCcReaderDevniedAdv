@@ -25,10 +25,6 @@ import com.github.devnied.emvnfccard.iso7816emv.TagAndLength;
 import com.github.devnied.emvnfccard.iso7816emv.impl.DefaultTerminalImpl;
 import com.github.devnied.emvnfccard.model.Application;
 import com.github.devnied.emvnfccard.model.EmvCard;
-
-import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
-import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAnalyze;
-
 import com.github.devnied.emvnfccard.model.EmvTrack1;
 import com.github.devnied.emvnfccard.model.EmvTrack2;
 import com.github.devnied.emvnfccard.model.enums.CardStateEnum;
@@ -51,6 +47,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
+import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAnalyze;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import fr.devnied.bitlib.BytesUtils;
 
@@ -60,12 +58,12 @@ import fr.devnied.bitlib.BytesUtils;
  *
  * @author MILLAU Julien
  */
-public class EmvTemplate {
+public class EmvTemplateV5 {
 
     /**
      * Class Logger
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(EmvTemplate.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmvTemplateV5.class);
 
     /**
      * Max record for SFI
@@ -245,7 +243,7 @@ public class EmvTemplate {
     }
 
     /**
-     * Build a new {@link EmvTemplate}.
+     * Build a new {@link EmvTemplateV5}.
      * <p>
      * Calling {@link #setProvider} is required before calling {@link #build()}.
      * All other methods are optional.
@@ -298,9 +296,9 @@ public class EmvTemplate {
         EmvCardAnalyze emvCardAnalyze;
 
         /**
-         * Create the {@link EmvTemplate} instances.
+         * Create the {@link EmvTemplateV5} instances.
          */
-        public EmvTemplate build() {
+        public EmvTemplateV5 build() {
             if (provider == null) {
                 throw new IllegalArgumentException("Provider may not be null.");
             }
@@ -308,7 +306,7 @@ public class EmvTemplate {
             if (terminal == null) {
                 terminal = new DefaultTerminalImpl();
             }
-            return new EmvTemplate(provider, terminal, config);
+            return new EmvTemplateV5(provider, terminal, config);
         }
 
     }
@@ -320,7 +318,7 @@ public class EmvTemplate {
      * @param pTerminal terminal data
      * @param pConfig   parser configuration (Default configuration used if null)
      */
-    private EmvTemplate(final IProvider pProvider, final ITerminal pTerminal, final Config pConfig) {
+    private EmvTemplateV5(final IProvider pProvider, final ITerminal pTerminal, final Config pConfig) {
         provider = new ProviderWrapper(pProvider);
         terminal = pTerminal;
         config = pConfig;
@@ -353,7 +351,7 @@ public class EmvTemplate {
      * @param pParsers parser implementation to add
      * @return current EmvTemplate
      */
-    public EmvTemplate addParsers(final IParser... pParsers) {
+    public EmvTemplateV5 addParsers(final IParser... pParsers) {
         if (pParsers != null) {
             for (IParser parser : pParsers) {
                 parsers.add(0, parser);
