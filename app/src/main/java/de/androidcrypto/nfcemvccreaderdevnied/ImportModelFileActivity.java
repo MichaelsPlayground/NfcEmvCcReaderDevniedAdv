@@ -301,7 +301,8 @@ public class ImportModelFileActivity extends AppCompatActivity {
         content = content + "\n" + "------------------------\n";
         content = content + "\n" + "tablePrint of tagListTemp";
         content = content + "\n" + "size of tagListTemp: " + tagListTemp.size();
-        content = content + "\n" + printTableTags(tagListTemp);
+        //content = content + "\n" + printTableTags(tagListTemp);
+        content = content + "\n" + printTableTagsText(tagListTemp);
         content = content + "\n" + "------------------------\n";
 
         content = content + "\n" + "analyze some tag data";
@@ -431,8 +432,19 @@ public class ImportModelFileActivity extends AppCompatActivity {
         content = content + "\n" + "------------------------\n";
         content = content + "\n" + "tablePrint of tagListNew";
         content = content + "\n" + "size of tagListNew: " + tagListNew.size();
-        content = content + "\n" + printTableTags(tagListNew);
+        //content = content + "\n" + printTableTags(tagListNew);
+        content = content + "\n" + printTableTagsText(tagListNew);
         content = content + "\n" + "------------------------\n";
+
+/*
+
+Name	Description	Source	Format	Template	Tag	Length	P/C
+Personal Identification Number (PIN) Try Counter	Number of PIN tries remaining	ICC	b		9F17	1	primitive
+
+https://books.google.de/books?id=CtwvDwAAQBAJ&pg=PA188&lpg=PA188&dq=emv+left+pin+try&source=bl&ots=ZTE1QMxrrP&sig=ACfU3U3QewhDiXqnfmPaQT9zvEXidUJJ5Q&hl=de&sa=X&ved=2ahUKEwj1x6zW98r5AhUHr6QKHdE7C4sQ6AF6BAgCEAM#v=onepage&q=emv%20left%20pin%20try&f=false
+Implementing Electronic Card Payment Systems
+Cristian Radu
+ */
 
 
         content = content + "\n" + "------------------------\n";
@@ -447,7 +459,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
     }
 
     /**
-     * section for deep card analyzing
+     * section for deep card analyzing end
      */
 
     public static String parseAndPrintApduRespond(byte[] apduResponse, List<TagNameValue> tagList) {
@@ -461,6 +473,40 @@ public class ImportModelFileActivity extends AppCompatActivity {
                     printTagNameValue(tag);
         }
         return output;
+    }
+
+    /**
+     * this is the advanced version of printTableTags - if there is a TagValueType of TEXT the
+     * output line is repeated with a byte array to string conversion
+     *
+     * @param tagList
+     * @return
+     */
+    public static String printTableTagsText(List<TagNameValue> tagList) {
+        StringBuilder buf = new StringBuilder();
+        buf.append("Tag   Name                            Value\n");
+        buf.append("--------------------------------------------------------------\n");
+        int tagListSize = tagList.size();
+        for (int i = 0; i < tagListSize; i++) {
+            TagNameValue tag = tagList.get(i);
+            boolean isTagValueTypeText = (tag.getTagValueType().equals(TagValueTypeEnum.TEXT.toString()));
+            buf.append(rightpad(BytesUtils.bytesToString(tag.getTagBytes()), 5));
+            buf.append(" ");
+            buf.append(rightpad(tag.getTagName(), 31));
+            buf.append(" ");
+            buf.append(rightpad(BytesUtils.bytesToStringNoSpace(tag.getTagValueBytes(), false), 25));
+            buf.append("\n");
+            // if the type is TEXT repeat the line with byte to string converted data
+            if (isTagValueTypeText) {
+                buf.append(rightpad(BytesUtils.bytesToString(tag.getTagBytes()), 5));
+                buf.append(" ");
+                buf.append(rightpad(tag.getTagName(), 31));
+                buf.append(" ");
+                buf.append(rightpad(new String(tag.getTagValueBytes()), 25));
+                buf.append("\n");
+            }
+        }
+        return buf.toString();
     }
 
     public static String printTableTags(List<TagNameValue> tagList) {
