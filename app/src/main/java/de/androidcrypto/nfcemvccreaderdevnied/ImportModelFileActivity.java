@@ -32,6 +32,7 @@ import com.github.devnied.emvnfccard.iso7816emv.ITag;
 import com.github.devnied.emvnfccard.iso7816emv.TLV;
 import com.github.devnied.emvnfccard.iso7816emv.TagAndLength;
 import com.github.devnied.emvnfccard.model.EmvTrack2;
+import com.github.devnied.emvnfccard.model.Service;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 import com.github.devnied.emvnfccard.utils.TrackUtils;
 import com.google.android.material.switchmaterial.SwitchMaterial;
@@ -472,6 +473,14 @@ public class ImportModelFileActivity extends AppCompatActivity {
             String cardNumber = emvTrack2.getCardNumber();
             Date expireDate = emvTrack2.getExpireDate();
             String expireDateString = DateUtils.getFormattedDateYyyy_Mm(expireDate);
+
+            Service service = emvTrack2.getService();
+            String service1Interchange = service.getServiceCode1().getInterchange();
+            String service1Technology = service.getServiceCode1().getTechnology();
+            String service2AuthorizationProcessing = service.getServiceCode2().getAuthorizationProcessing();
+            String service3GetAllowedServices = service.getServiceCode3().getAllowedServices();
+            String service3PinRequirements = service.getServiceCode3().getPinRequirements();
+
             content = content + "\n" + "CardNumber: " + cardNumber;
             content = content + "\n" + "ExpireDate: " + expireDateString;
             content = content + "\n" + "== == Track2 equivalent data ==";
@@ -490,6 +499,19 @@ public class ImportModelFileActivity extends AppCompatActivity {
 
             tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x23}, "Track2 ExpireDate", TagValueTypeEnum.TEXT, expireDateString.getBytes(StandardCharsets.UTF_8));
             tagListNew.add(tnvNew);
+
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x24}, "Track2 Service1 Interchange", TagValueTypeEnum.TEXT, service1Interchange.getBytes(StandardCharsets.UTF_8));
+            tagListNew.add(tnvNew);
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x25}, "Track2 Service1 Technology", TagValueTypeEnum.TEXT, service1Technology.getBytes(StandardCharsets.UTF_8));
+            tagListNew.add(tnvNew);
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x26}, "Track2 Service2 AuthorizationProcessing", TagValueTypeEnum.TEXT, service2AuthorizationProcessing.getBytes(StandardCharsets.UTF_8));
+            tagListNew.add(tnvNew);
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x27}, "Track2 Service3 GetAllowedServices", TagValueTypeEnum.TEXT, service3GetAllowedServices.getBytes(StandardCharsets.UTF_8));
+            tagListNew.add(tnvNew);
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x28}, "Track2 Service3 PinRequirements", TagValueTypeEnum.TEXT, service3PinRequirements.getBytes(StandardCharsets.UTF_8));
+            tagListNew.add(tnvNew);
+
+
         } else {
             content = content + "\n" + "no Track2 equivalent data available";
         }
@@ -575,7 +597,11 @@ Cristian Radu
                 buf.append(" ");
                 buf.append(rightpad(tag.getTagName(), 31));
                 buf.append(" ");
-                buf.append(rightpad(new String(tag.getTagValueBytes()), 25));
+                if (tag.getTagValueBytes() != null) {
+                    buf.append(rightpad(new String(tag.getTagValueBytes()), 25));
+                } else {
+                    buf.append(rightpad("-empty-", 25));
+                }
                 buf.append("\n");
             }
         }
