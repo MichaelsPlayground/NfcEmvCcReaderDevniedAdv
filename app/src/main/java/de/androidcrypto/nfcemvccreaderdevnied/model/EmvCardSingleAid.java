@@ -1,6 +1,7 @@
 package de.androidcrypto.nfcemvccreaderdevnied.model;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 
 public class EmvCardSingleAid implements Serializable {
@@ -78,6 +79,9 @@ public class EmvCardSingleAid implements Serializable {
 
     private byte[] authorizationBytes; //
     private byte[] cvm; // cardholder verification
+
+    private byte[] atr;
+    private Collection<String> atrDescription;
 
     // init
     public EmvCardSingleAid() {}
@@ -435,5 +439,21 @@ public class EmvCardSingleAid implements Serializable {
 
     public void setCardLogFormatResponse(byte[] cardLogFormatResponse) {
         this.cardLogFormatResponse = cardLogFormatResponse;
+    }
+
+    public byte[] getAtr() {
+        return atr;
+    }
+
+    public void setAtr(byte[] atr) {
+        this.atr = atr;
+    }
+
+    public Collection<String> getAtrDescription() {
+        return atrDescription;
+    }
+
+    public void setAtrDescription(Collection<String> atrDescription) {
+        this.atrDescription = atrDescription;
     }
 }

@@ -30,6 +30,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.github.devnied.emvnfccard.enums.CommandEnum;
+import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
 import com.github.devnied.emvnfccard.parser.EmvTemplate;
 import com.github.devnied.emvnfccard.utils.CommandApdu;
 import com.github.devnied.emvnfccard.utils.ResponseUtils;
@@ -46,6 +47,8 @@ import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAnalyze;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
+import de.androidcrypto.nfcemvccreaderdevnied.utils.ApplicationInterchangeProfile;
+import de.androidcrypto.nfcemvccreaderdevnied.utils.CVMList;
 import fr.devnied.bitlib.BytesUtils;
 
 public class VerifyPin2 extends AppCompatActivity implements NfcAdapter.ReaderCallback {
@@ -171,131 +174,190 @@ public class VerifyPin2 extends AppCompatActivity implements NfcAdapter.ReaderCa
             idContentString = idContentString + "\n" + "we are using only first AID";
             // iterate through the aids
             //for (int i = 0; i < aidsList.size(); i++) {
-            int i = 0;
-                byte[] selectedAid = aidsList.get(i);
-                idContentString = idContentString + "\n" + "\n" + "aid nr: " + i + " AID: " + BytesUtils.bytesToString(selectedAid);
-                // we store the data in a fresh/unused model
-                emvCardSingleAid = new EmvCardSingleAid();
-                // to get best results we start the complete reading from the beginning with Ppse select command
-                byte[] selectPpseResponse = parser.selectPpse(emvCardSingleAid);
-                idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(selectPpseResponse);
-                // store the cleartext parsed response
-                //emvCardSingleAid.setApduSelectPpseParsed(TlvUtil.prettyPrintAPDUResponse(selectPpseResponse));
-                String timestampString = Utils.getTimestamp();
-                emvCardSingleAid.setTimestampReadString(timestampString);
-                emvCardSingleAid.setSelectedAid(selectedAid);
-                idContentString = idContentString + "\n" + "reading starts: " + timestampString;
+            int i = 0; // we are using the first AID only
+            byte[] selectedAid = aidsList.get(i);
+            idContentString = idContentString + "\n" + "\n" + "aid nr: " + i + " AID: " + BytesUtils.bytesToString(selectedAid);
+            // we store the data in a fresh/unused model
+            emvCardSingleAid = new EmvCardSingleAid();
+            // to get best results we start the complete reading from the beginning with Ppse select command
+            byte[] selectPpseResponse = parser.selectPpse(emvCardSingleAid);
+            idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(selectPpseResponse);
+            // store the cleartext parsed response
+            //emvCardSingleAid.setApduSelectPpseParsed(TlvUtil.prettyPrintAPDUResponse(selectPpseResponse));
+            String timestampString = Utils.getTimestamp();
+            emvCardSingleAid.setTimestampReadString(timestampString);
+            emvCardSingleAid.setSelectedAid(selectedAid);
+            idContentString = idContentString + "\n" + "reading starts: " + timestampString;
 
-                // the following steps are run in the aid loop
-                idContentString = idContentString + "\n" + "\n" + "---- step 03 select PID with AID";
-                byte[] selectPidResponse = parser.selectPid(selectedAid);
-                boolean selectPidResponseSuccess = ResponseUtils.isSucceed(selectPidResponse);
-                if (!selectPidResponseSuccess) {
-                    // not successfull
-                    emvCardSingleAid.setIsParsingCompleted(false);
-                    idContentString = idContentString + "\n" + "\n" + "---- ERROR selectPID failure ----" + "\n";
-                    return;
+            // the following steps are run in the aid loop
+            idContentString = idContentString + "\n" + "\n" + "---- step 03 select PID with AID";
+            byte[] selectPidResponse = parser.selectPid(selectedAid);
+            boolean selectPidResponseSuccess = ResponseUtils.isSucceed(selectPidResponse);
+            if (!selectPidResponseSuccess) {
+                // not successfull
+                emvCardSingleAid.setIsParsingCompleted(false);
+                idContentString = idContentString + "\n" + "\n" + "---- ERROR selectPID failure ----" + "\n";
+                return;
+            }
+            if (selectPidResponse != null) {
+                idContentString = idContentString + "\n" + "selectPIDResponse: " + BytesUtils.bytesToString(selectPpseResponse);
+                idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(selectPidResponse);
+
+            } else {
+                idContentString = idContentString + "\n" + "selectPid is not successfull";
+            }
+
+            idContentString = idContentString + "\n" + "\n" + "---- step 04 get Processing Options (PDOL) ----";
+            // this works for all cards but DKB Visa Debit
+            byte[] gpo = parser.parseSelectResponse(selectPidResponse);
+            // this is a test for DKB Visa debit only
+            //byte[] gpoVisa = parser.parseSelectResponseVisa(); // works !
+            if (gpo == null) {
+                idContentString = idContentString + "\n" + "Notice: even if there is more than one AID only the first AID is run !";
+                gpo = parser.getGpoForVisaCards();
+            }
+            idContentString = idContentString + "\n" + "gpo: " + BytesUtils.bytesToString(gpo);
+            idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(gpo);
+
+            // analyze tag 82 = application interchange profile
+            idContentString = idContentString + "\n" + "\n" + "---- step 04b analyze application interchange profile ----";
+            byte[] aipByte = TlvUtil.getValue(gpo, EmvTags.APPLICATION_INTERCHANGE_PROFILE);
+            boolean isCardholderVerificationSupported = false;
+            if (aipByte != null) {
+                ApplicationInterchangeProfile aip =
+                        new ApplicationInterchangeProfile(aipByte[0], aipByte[1]);
+                idContentString = idContentString + "\n" + "== Application Interchange Profile data ==\n";
+                idContentString = idContentString + "\n" + aip.toString();
+                isCardholderVerificationSupported = aip.isCardholderVerificationSupported();
+            }
+
+            idContentString = idContentString + "\n" + "\n" + "---- step 05 parse GPO and AFL ----";
+            byte[] extractedCardData = parser.extractCommonsCardData(gpo);
+            if (extractedCardData != null) {
+                idContentString = idContentString + "\n" + "AFL";
+                idContentString = idContentString + "\n" + "AFL: " + BytesUtils.bytesToString(emvCardSingleAid.getApplicationFileLocator());
+                idContentString = idContentString + "\n" + "AFL: " + TlvUtil.prettyPrintAPDUResponse(emvCardSingleAid.getApplicationFileLocator());
+
+                idContentString = idContentString + "\n" + "extracted data";
+                idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(extractedCardData);
+                idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(emvCardSingleAid.getApduReadRecordsResponse().get(0));
+
+            }
+            List<Afl> afls = emvCardSingleAid.getAfls();
+            if (afls != null) {
+                int aflsSize = afls.size();
+                for (int j = 0; j < aflsSize; j++) {
+                    Afl afl = afls.get(j);
+                    idContentString = idContentString + "\n" + "AFL nr: " + j + "SFI: " + afl.getSfi() +
+                            " first rec: " + afl.getFirstRecord() +
+                            " last rec: " + afl.getLastRecord() +
+                            " offline auth: " + afl.isOfflineAuthentication();
                 }
-                if (selectPidResponse != null) {
-                    idContentString = idContentString + "\n" + "selectPIDResponse: " + BytesUtils.bytesToString(selectPpseResponse);
-                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(selectPidResponse);
+            } else {
+                idContentString = idContentString + "\n" + "AFL data not available";
+            }
 
-                } else {
-                    idContentString = idContentString + "\n" + "selectPid is not successfull";
+            // read the ATC and other data
+            // todo save ATC & other data to EmvCardSingleAid
+            byte[] getDataResponse = parser.getDataAtc();
+            idContentString = idContentString + "\n" + "getDataResponse for ATC";
+            if (getDataResponse != null) {
+                idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
+                idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
+
+            } else {
+                idContentString = idContentString + "\n" + "getData for ATC is not successfull";
+            }
+/*
+            getDataResponse = parser.getDataLastOnlineAtc();
+            idContentString = idContentString + "\n" + "getDataResponse for LastOnlineAtc";
+            if (getDataResponse != null) {
+                idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
+                idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
+
+            } else {
+                idContentString = idContentString + "\n" + "getData for LastOnlineAtc is not successfull";
+            }
+*/
+            getDataResponse = parser.getDataLeftPinTryCounter();
+            idContentString = idContentString + "\n" + "getDataResponse for LeftPinTryCounter";
+            if (getDataResponse != null) {
+                idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
+                idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
+
+            } else {
+                idContentString = idContentString + "\n" + "getData for PinTryCounter is not successfull";
+            }
+/*
+            getDataResponse = parser.getDataLogFormat();
+            idContentString = idContentString + "\n" + "getDataResponse for LogFormat";
+            if (getDataResponse != null) {
+                idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
+                idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
+
+            } else {
+                idContentString = idContentString + "\n" + "getData is not successfull";
+            }
+*/
+
+            // find the tag 8e = cardholder verification method (cvm) list
+            idContentString = idContentString + "\n" + "find the tag 8e = cardholder verification method (cvm) list";
+            List<byte[]> apduReadRecordsResponse = emvCardSingleAid.getApduReadRecordsResponse();
+            byte[] cvmListByte = null;
+            if (apduReadRecordsResponse != null)
+            {
+                byte[] apduReadRecordResponse;
+                int apduReadRecordsResponseSize = apduReadRecordsResponse.size();
+                for (int k = 0; k < apduReadRecordsResponseSize; k++) {
+                    apduReadRecordResponse = apduReadRecordsResponse.get(k);
+                    cvmListByte = TlvUtil.getValue(apduReadRecordResponse, EmvTags.CVM_LIST);
+                    if (cvmListByte != null) break;
                 }
+            }
+            if (cvmListByte != null) {
+                idContentString = idContentString + "\n" + "CVM list found: ";
+                idContentString = idContentString + "\n" + BytesUtils.bytesToString(cvmListByte);
+                CVMList cvmList = new CVMList(cvmListByte);
+                idContentString = idContentString + "\n" + cvmList.toString();
+                idContentString = idContentString + "\n" + "== Cardholder Verification Method (CVM) data ==";
+            } else {
+                idContentString = idContentString + "\n" + "CVM list NOT found";
+            }
 
-                idContentString = idContentString + "\n" + "\n" + "---- step 04 get Processing Options (PDOL) ----";
-                // this works for all cards but DKB Visa Debit
-                byte[] gpo = parser.parseSelectResponse(selectPidResponse);
-                // this is a test for DKB Visa debit only
-                //byte[] gpoVisa = parser.parseSelectResponseVisa(); // works !
-                if (gpo == null) {
-                    idContentString = idContentString + "\n" + "Notice: even if there is more than one AID only the first AID is run !";
-                    gpo = parser.getGpoForVisaCards();
-                }
-                idContentString = idContentString + "\n" + "gpo: " + BytesUtils.bytesToString(gpo);
-                idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(gpo);
-
-                idContentString = idContentString + "\n" + "\n" + "---- step 05 parse GPO and AFL ----";
-                byte[] extractedCardData = parser.extractCommonsCardData(gpo);
-                if (extractedCardData != null) {
-                    idContentString = idContentString + "\n" + "AFL";
-                    idContentString = idContentString + "\n" + "AFL: " + BytesUtils.bytesToString(emvCardSingleAid.getApplicationFileLocator());
-                    idContentString = idContentString + "\n" + "AFL: " + TlvUtil.prettyPrintAPDUResponse(emvCardSingleAid.getApplicationFileLocator());
-
-                    idContentString = idContentString + "\n" + "extracted data";
-                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(extractedCardData);
-                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(emvCardSingleAid.getApduReadRecordsResponse().get(0));
-
-                }
-                List<Afl> afls = emvCardSingleAid.getAfls();
-                if (afls != null) {
-                    int aflsSize = afls.size();
-                    for (int j = 0; j < aflsSize; j++) {
-                        Afl afl = afls.get(j);
-                        idContentString = idContentString + "\n" + "AFL nr: " + j + "SFI: " + afl.getSfi() +
-                                " first rec: " + afl.getFirstRecord() +
-                                " last rec: " + afl.getLastRecord() +
-                                " offline auth: " + afl.isOfflineAuthentication();
-                    }
-                } else {
-                    idContentString = idContentString + "\n" + "AFL data not available";
-                }
-
-                // read the ATC and other data
-                // todo save ATC & other data to EmvCardSingleAid
-                byte[] getDataResponse = parser.getDataAtc();
-                idContentString = idContentString + "\n" + "getDataResponse for ATC";
-                if (getDataResponse != null) {
-                    idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
-                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
-
-                } else {
-                    idContentString = idContentString + "\n" + "getData for ATC is not successfull";
-                }
-
-                getDataResponse = parser.getDataLastOnlineAtc();
-                idContentString = idContentString + "\n" + "getDataResponse for LastOnlineAtc";
-                if (getDataResponse != null) {
-                    idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
-                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
-
-                } else {
-                    idContentString = idContentString + "\n" + "getData for LastOnlineAtc is not successfull";
-                }
-
-                getDataResponse = parser.getDataLeftPinTryCounter();
-                idContentString = idContentString + "\n" + "getDataResponse for LeftPinTryCounter";
-                if (getDataResponse != null) {
-                    idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
-                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
-
-                } else {
-                    idContentString = idContentString + "\n" + "getData for PinTryCounter is not successfull";
-                }
-
-                getDataResponse = parser.getDataLogFormat();
-                idContentString = idContentString + "\n" + "getDataResponse for LogFormat";
-                if (getDataResponse != null) {
-                    idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
-                    idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
-
-                } else {
-                    idContentString = idContentString + "\n" + "getData is not successfull";
-                }
 
             idContentString = idContentString + "\n" + "\n" + "* * * now we are going to verify the pin * * *";
             // pin to verify is a String in pin
 
             String commandHeader = "002000800824";
             String commandFooter = "FFFFFFFFFF";
+            pin = "2731"; // fixed for MC AAB
             byte[] commandApdu = BytesUtils.fromString(commandHeader + pin + commandFooter);
             //byte[] apduGetDataCommand = new CommandApdu(CommandEnum.GET_DATA, 0x9F, 0x36, null, 0).toBytes();
-            //byte[] responseApdu = provider.transceive(commandApdu);
+
+            idContentString = idContentString + "\n" + "apduGetDataCommand for PinVerification: " + BytesUtils.bytesToString(commandApdu);
+
+
             System.out.println("#*# apduGetDataCommand for PinVerification");
             System.out.println("#*# CommandApdu:  " + BytesUtils.bytesToString(commandApdu));
             //System.out.println("#*# ResponseApdu: " + BytesUtils.bytesToString(responseApdu));
             //System.out.println("#*# apduGetDataResponse\n" + TlvUtil.prettyPrintAPDUResponse(apduGetDataResponse));
+/*
+            byte[] responseApdu = provider.transceive(commandApdu);
+            if (responseApdu != null) {
+                idContentString = idContentString + "\n" + "apduGetDataResponse for PinVerification: " + BytesUtils.bytesToString(responseApdu);
+            } else {
+                idContentString = idContentString + "\n" + "apduGetDataResponse for PinVerification is NULL";
+            }
+*/
+            getDataResponse = parser.getDataLeftPinTryCounter();
+            idContentString = idContentString + "\n" + "getDataResponse for LeftPinTryCounter";
+            if (getDataResponse != null) {
+                idContentString = idContentString + "\n" + "getDataResponse: " + BytesUtils.bytesToString(getDataResponse);
+                idContentString = idContentString + "\n" + TlvUtil.prettyPrintAPDUResponse(getDataResponse);
+
+            } else {
+                idContentString = idContentString + "\n" + "getData for PinTryCounter is not successfull";
+            }
 
 /*
 https://stackoverflow.com/questions/21019137/emv-verify-command-returning-69-85
@@ -351,17 +413,16 @@ As found out, only one PIN VERIFY command will be accepted.
 
  */
 
-                // store the emvCardSingleAid in the "all" model
-                emvCardSingleAid.setIsParsingCompleted(true);
-                aids.add(selectedAid);
-                emvCardSingleAids.add(emvCardSingleAid);
+            // store the emvCardSingleAid in the "all" model
+            emvCardSingleAid.setIsParsingCompleted(true);
+            aids.add(selectedAid);
+            emvCardSingleAids.add(emvCardSingleAid);
             //}
             // now store all data in the all model
             emvCardAids.setAids(aids);
             emvCardAids.setEmvCardSingleAids(emvCardSingleAids);
 
             dumpExportString = idContentString;
-
 
 
             // todo check ResponseSuccess
@@ -445,7 +506,6 @@ As found out, only one PIN VERIFY command will be accepted.
 */
 
 
-
             idContentString = idContentString + "\n" + "---- single task end ----" + "\n";
 
             /*
@@ -461,7 +521,6 @@ As found out, only one PIN VERIFY command will be accepted.
             byte[] apduSelectPpseResponse = emvCardAnalyze.getApduSelectPpseResponse();
             idContentString = idContentString + "\n" + "apduSelectPpseCommand: " + BytesUtils.bytesToString(apduSelectPpseCommand);
             idContentString = idContentString + "\n" + "apduSelectPpseResponse: " + BytesUtils.bytesToString(apduSelectPpseResponse);
-
 
 
             // section for CPLC data starts
@@ -530,7 +589,7 @@ As found out, only one PIN VERIFY command will be accepted.
         }
 
     }
-    
+
     public static String prettyPrintCardNumber(String cardNumber) {
         if (cardNumber == null) return null;
         char delimiter = ' ';

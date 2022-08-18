@@ -16,13 +16,9 @@
 
 package com.github.devnied.emvnfccard.utils;
 
-import android.annotation.SuppressLint;
-import android.content.Context;
-
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,11 +27,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import de.androidcrypto.nfcemvccreaderdevnied.App;
-import de.androidcrypto.nfcemvccreaderdevnied.R;
 
 /**
  * Class used to find ATR description
@@ -73,9 +68,10 @@ public final class AtrUtils {
 
 		try {
 			// todo read the smartcard_list from other resource, the function is not run at this time
+			//is = view.getContext().getResources().openRawResource(R.raw.smartcard_list);
 			is = AtrUtils.class.getResourceAsStream("/smartcard_list.txt");
 			//is = App.getContext().getClassLoader().getResource("smartcard_list.txt").openStream();
-			isr = new InputStreamReader(is, CharEncoding.UTF_8);
+			isr = new InputStreamReader(is, StandardCharsets.UTF_8);
 			br = new BufferedReader(isr);
 
 			int lineNumber = 0;
@@ -111,8 +107,6 @@ public final class AtrUtils {
 	 * @return list of description
 	 */
 	public static final Collection<String> getDescription(final String pAtr) {
-	//public static final Collection<String> getDescription(final String pAtr, Context pContext) {
-		//context = pContext;
 		Collection<String> ret = null;
 		if (StringUtils.isNotBlank(pAtr)) {
 			String val = StringUtils.deleteWhitespace(pAtr).toUpperCase();
@@ -134,8 +128,6 @@ public final class AtrUtils {
 	 * @return card description
 	 */
 	public static final Collection<String> getDescriptionFromAts(final String pAts) {
-	//public static final Collection<String> getDescriptionFromAts(final String pAts, Context pContext) {
-		//context = pContext;
 		Collection<String> ret = new ArrayList<String>();
 		if (StringUtils.isNotBlank(pAts)) {
 			String val = StringUtils.deleteWhitespace(pAts).replaceAll("9000$", "");

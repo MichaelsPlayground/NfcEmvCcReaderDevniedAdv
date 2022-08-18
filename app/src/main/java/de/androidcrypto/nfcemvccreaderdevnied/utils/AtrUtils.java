@@ -19,21 +19,12 @@ package de.androidcrypto.nfcemvccreaderdevnied.utils;
 import android.content.Context;
 
 import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import de.androidcrypto.nfcemvccreaderdevnied.App;
 
 /**
  * Class used to find ATR description
@@ -62,6 +53,7 @@ public final class AtrUtils {
 	/**
 	 * MultiMap containing ATR
 	 */
+	/*
 	private static final MultiValuedMap<String, String> MAP = new ArrayListValuedHashMap<String, String>();
 
 	static {
@@ -76,6 +68,7 @@ public final class AtrUtils {
 			//System.out.println("### App.getContext: " + App.getContext().toString());
 			//System.out.println("### App.getContext().getClass(): " + App.getContext().getClass().getCanonicalName());
 			//is =  App.getContext().getClass().getResourceAsStream("/smartcard_list.txt");
+			is = context.getResources().openRawResource(context.R.raw.smartcard_list);
 			System.out.println("context : " + context.toString());
 			is = context.getAssets().open("smartcard_list.txt");
 			isr = new InputStreamReader(is, CharEncoding.UTF_8);
@@ -105,6 +98,7 @@ public final class AtrUtils {
 			IOUtils.closeQuietly(is);
 		}
 	}
+*/
 
 	/**
 	 * Method used to find description from ATR
@@ -113,9 +107,7 @@ public final class AtrUtils {
 	 *            Card ATR
 	 * @return list of description
 	 */
-	public static final Collection<String> getDescription(final String pAtr) {
-	//public static final Collection<String> getDescription(final String pAtr, Context pContext) {
-		//context = pContext;
+	public static final Collection<String> getDescription(final String pAtr, MultiValuedMap<String, String> MAP) {
 		Collection<String> ret = null;
 		if (StringUtils.isNotBlank(pAtr)) {
 			String val = StringUtils.deleteWhitespace(pAtr).toUpperCase();
@@ -136,9 +128,7 @@ public final class AtrUtils {
 	 *            EMV card ATS
 	 * @return card description
 	 */
-	public static final Collection<String> getDescriptionFromAts(final String pAts) {
-	//public static final Collection<String> getDescriptionFromAts(final String pAts, Context pContext) {
-		//context = pContext;
+	public static final Collection<String> getDescriptionFromAts(final String pAts, MultiValuedMap<String, String> MAP) {
 		Collection<String> ret = new ArrayList<String>();
 		if (StringUtils.isNotBlank(pAts)) {
 			String val = StringUtils.deleteWhitespace(pAts).replaceAll("9000$", "");

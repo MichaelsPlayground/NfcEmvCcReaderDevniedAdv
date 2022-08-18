@@ -50,8 +50,10 @@ public class PcscProvider implements IProvider {
         // return new byte[0]; // from Stackoverflow
         byte[] result;
         result = mTagCom.getHistoricalBytes(); // for tags using NFC-A
+        System.out.println("***### getAt getHistoricalBytes: " + BytesUtils.bytesToString(result));
         if (result == null) {
             result = mTagCom.getHiLayerResponse(); // for tags using NFC-B
+            System.out.println("***### getAt getHiLayerResponse: " + BytesUtils.bytesToString(result));
         }
         return result;
     }

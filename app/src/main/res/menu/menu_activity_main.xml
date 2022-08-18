@@ -38,4 +38,9 @@
         android:title="Clear Dump"
         app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/action_verify_pin"
+        android:title="Verify PIN"
+        app:showAsAction="never"/>
+
 </menu>

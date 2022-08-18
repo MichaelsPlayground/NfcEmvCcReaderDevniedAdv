@@ -15,6 +15,8 @@
  */
 package com.github.devnied.emvnfccard.parser;
 
+import android.content.Context;
+
 import com.github.devnied.emvnfccard.enums.CommandEnum;
 import com.github.devnied.emvnfccard.enums.EmvCardScheme;
 import com.github.devnied.emvnfccard.exception.CommunicationException;
@@ -40,6 +42,7 @@ import com.github.devnied.emvnfccard.utils.ResponseUtils;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 import com.github.devnied.emvnfccard.utils.TrackUtils;
 
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,10 +51,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
+import de.androidcrypto.nfcemvccreaderdevnied.utils.AtrUtils;
 import fr.devnied.bitlib.BytesUtils;
 
 /**
@@ -916,6 +921,22 @@ public class EmvTemplate {
         }
     }
 
+    public void getAtr(MultiValuedMap<String, String> MAP) {
+        // Update ATS or ATR
+        if (config.readAt) {
+            // todo try to get AtrDescription from AtrUtils, here removed
+            byte[] pByte = provider.getAt();
+            byte[] rByte;
+            rByte = Arrays.copyOfRange(pByte, 0, Math.max(pByte.length - 2, 0));
+            emvCardSingleAid.setAtr(rByte);
+            //emvCardSingleAid.setAtrDescription(config.contactLess ? AtrUtils.getDescriptionFromAts(BytesUtils.bytesToStringNoSpace(rByte), MAP) : AtrUtils.getDescription(BytesUtils.bytesToStringNoSpace(rByte), MAP));
+            // leave the original response as getDescription needs the response
+            emvCardSingleAid.setAtrDescription(config.contactLess ? AtrUtils.getDescriptionFromAts(BytesUtils.bytesToStringNoSpace(provider.getAt()), MAP) : AtrUtils.getDescription(BytesUtils.bytesToStringNoSpace(provider.getAt()), MAP));
+            System.out.println("found an ATR: " + BytesUtils.bytesToStringNoSpace(rByte));
+            System.out.println("found an ATR: " + BytesUtils.bytesToString(rByte));
+        }
+    }
+
     /**
      *
      * Section for single tasks end
@@ -938,7 +959,7 @@ public class EmvTemplate {
         if (config.readAt) {
             // todo try to get AtrDescription from AtrUtils, here removed
             card.setAt(BytesUtils.bytesToStringNoSpace(provider.getAt()));
-            // card.setAtrDescription(config.contactLess ? AtrUtils.getDescriptionFromAts(card.getAt()) : AtrUtils.getDescription(card.getAt()));
+            //card.setAtrDescription(config.contactLess ? AtrUtils.getDescriptionFromAts(card.getAt()) : AtrUtils.getDescription(card.getAt()));
         }
         // use PSE first
         if (!readWithPSE()) {
