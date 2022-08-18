@@ -29,6 +29,11 @@
         app:showAsAction="never"/>
 
     <item
+        android:id="@+id/action_analyze_model_file"
+        android:title="Analyze Model File"
+        app:showAsAction="never"/>
+
+    <item
         android:id="@+id/action_clear_dump"
         android:title="Clear Dump"
         app:showAsAction="never"/>

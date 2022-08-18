@@ -815,6 +815,16 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             }
         });
 
+        MenuItem mAnalyzeModelFile = menu.findItem(R.id.action_analyze_model_file);
+        mAnalyzeModelFile.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, AnalyzeModelFileActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
         MenuItem mClearDump = menu.findItem(R.id.action_clear_dump);
         mClearDump.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -824,6 +834,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 return false;
             }
         });
+
+
         return super.onCreateOptionsMenu(menu);
     }
 }
