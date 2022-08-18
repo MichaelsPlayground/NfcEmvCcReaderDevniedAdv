@@ -16,7 +16,8 @@
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
-    <ScrollView
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -176,7 +177,6 @@
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:focusable="false"
-                    android:maxLines="20"
                     android:text=""
                     android:visibility="visible"
                     tools:ignore="KeyboardInaccessibleWidget" />
@@ -208,6 +208,6 @@
 
         </LinearLayout>
 
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 </LinearLayout>
 
