@@ -107,6 +107,10 @@
 
             <include layout="@layout/detail_apdu_select_pid"/>
 
+            <include layout="@layout/detail_apdu_gpo"/>
+
+            <include layout="@layout/detail_apdu_gpo_visa"/>
+
             <TextView
                 android:id="@+id/tvAnalyzeReadResult"
                 android:layout_width="match_parent"

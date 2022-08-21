@@ -74,6 +74,7 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
     TextInputEditText etAnalyzeApduResponseSelectPpse;
     TextInputLayout etAnalyzeApduResponseSelectPpseParsedDecoration;
     TextInputEditText etAnalyzeApduResponseSelectPpseParsed;
+    
     TextInputLayout etAnalyzeApduCommandSelectPidDecoration;
     TextInputEditText etAnalyzeApduCommandSelectPid;
     TextInputLayout etAnalyzeApduResponseSelectPidDecoration;
@@ -81,6 +82,15 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
     TextInputLayout etAnalyzeApduResponseSelectPidParsedDecoration;
     TextInputEditText etAnalyzeApduResponseSelectPidParsed;
 
+    TextInputLayout etAnalyzeApduCommandGpoDecoration;
+    TextInputEditText etAnalyzeApduCommandGpo;
+    TextInputLayout etAnalyzeApduResponseGpoDecoration;
+    TextInputEditText etAnalyzeApduResponseGpo;
+    TextInputLayout etAnalyzeApduResponseGpoParsedDecoration;
+    TextInputEditText etAnalyzeApduResponseGpoParsed;
+    
+    
+    
 
     EmvCardAids emvCardAids;
     List<byte[]> aids = new ArrayList<byte[]>();
@@ -113,6 +123,13 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
         etAnalyzeApduResponseSelectPid = findViewById(R.id.etAnalyzeApduResponseSelectPid);
         etAnalyzeApduResponseSelectPidParsedDecoration = findViewById(R.id.etAnalyzeApduResponseSelectPidParsedDecoration);
         etAnalyzeApduResponseSelectPidParsed = findViewById(R.id.etAnalyzeApduResponseSelectPidParsed);
+
+        etAnalyzeApduCommandGpoDecoration = findViewById(R.id.etAnalyzeApduCommandGpoDecoration);
+        etAnalyzeApduCommandGpo = findViewById(R.id.etAnalyzeApduCommandGpo);
+        etAnalyzeApduResponseGpoDecoration = findViewById(R.id.etAnalyzeApduResponseGpoDecoration);
+        etAnalyzeApduResponseGpo = findViewById(R.id.etAnalyzeApduResponseGpo);
+        etAnalyzeApduResponseGpoParsedDecoration = findViewById(R.id.etAnalyzeApduResponseGpoParsedDecoration);
+        etAnalyzeApduResponseGpoParsed = findViewById(R.id.etAnalyzeApduResponseGpoParsed);
         
         // todo remove showAllFields - show only when file is selected
         // show all data fields
@@ -130,12 +147,15 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
     private void showAllFields() {
         etAnalyzeApduCommandSelectPpseDecoration.setVisibility(View.VISIBLE);
         etAnalyzeApduCommandSelectPidDecoration.setVisibility(View.VISIBLE);
+        etAnalyzeApduCommandGpoDecoration.setVisibility(View.VISIBLE);
 
         etAnalyzeApduResponseSelectPpseDecoration.setVisibility(View.VISIBLE);
         etAnalyzeApduResponseSelectPidDecoration.setVisibility(View.VISIBLE);
+        etAnalyzeApduResponseGpoDecoration.setVisibility(View.VISIBLE);
 
         etAnalyzeApduResponseSelectPpseParsedDecoration.setVisibility(View.VISIBLE);
         etAnalyzeApduResponseSelectPidParsedDecoration.setVisibility(View.VISIBLE);
+        etAnalyzeApduResponseGpoParsedDecoration.setVisibility(View.VISIBLE);
 
 
     }
