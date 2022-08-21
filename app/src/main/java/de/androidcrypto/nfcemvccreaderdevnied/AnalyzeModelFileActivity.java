@@ -74,7 +74,12 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
     TextInputEditText etAnalyzeApduResponseSelectPpse;
     TextInputLayout etAnalyzeApduResponseSelectPpseParsedDecoration;
     TextInputEditText etAnalyzeApduResponseSelectPpseParsed;
-
+    TextInputLayout etAnalyzeApduCommandSelectPidDecoration;
+    TextInputEditText etAnalyzeApduCommandSelectPid;
+    TextInputLayout etAnalyzeApduResponseSelectPidDecoration;
+    TextInputEditText etAnalyzeApduResponseSelectPid;
+    TextInputLayout etAnalyzeApduResponseSelectPidParsedDecoration;
+    TextInputEditText etAnalyzeApduResponseSelectPidParsed;
 
 
     EmvCardAids emvCardAids;
@@ -102,6 +107,13 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
         etAnalyzeApduResponseSelectPpseParsedDecoration = findViewById(R.id.etAnalyzeApduResponseSelectPpseParsedDecoration);
         etAnalyzeApduResponseSelectPpseParsed = findViewById(R.id.etAnalyzeApduResponseSelectPpseParsed);
 
+        etAnalyzeApduCommandSelectPidDecoration = findViewById(R.id.etAnalyzeApduCommandSelectPidDecoration);
+        etAnalyzeApduCommandSelectPid = findViewById(R.id.etAnalyzeApduCommandSelectPid);
+        etAnalyzeApduResponseSelectPidDecoration = findViewById(R.id.etAnalyzeApduResponseSelectPidDecoration);
+        etAnalyzeApduResponseSelectPid = findViewById(R.id.etAnalyzeApduResponseSelectPid);
+        etAnalyzeApduResponseSelectPidParsedDecoration = findViewById(R.id.etAnalyzeApduResponseSelectPidParsedDecoration);
+        etAnalyzeApduResponseSelectPidParsed = findViewById(R.id.etAnalyzeApduResponseSelectPidParsed);
+        
         // todo remove showAllFields - show only when file is selected
         // show all data fields
         showAllFields();
@@ -117,8 +129,15 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
 
     private void showAllFields() {
         etAnalyzeApduCommandSelectPpseDecoration.setVisibility(View.VISIBLE);
+        etAnalyzeApduCommandSelectPidDecoration.setVisibility(View.VISIBLE);
+
         etAnalyzeApduResponseSelectPpseDecoration.setVisibility(View.VISIBLE);
+        etAnalyzeApduResponseSelectPidDecoration.setVisibility(View.VISIBLE);
+
         etAnalyzeApduResponseSelectPpseParsedDecoration.setVisibility(View.VISIBLE);
+        etAnalyzeApduResponseSelectPidParsedDecoration.setVisibility(View.VISIBLE);
+
+
     }
 
     // this method is called from fileLoaderActivityResultLauncher
@@ -159,7 +178,7 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
                     etAnalyzeApduResponseSelectPpse.setText(BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPpseResponse()));
                 }
                 content = content + "\n" + "apduSelectPpseParsed:\n" + emvCardSingleAid.getApduSelectPpseParsed();
-                etAnalyzeApduResponseSelectPpseParsed.setText(emvCardSingleAid.getApduSelectPpseParsed());
+                etAnalyzeApduResponseSelectPpseParsed.setText(emvCardSingleAid.getApduSelectPpseParsed().replace("\r", "").replace("\n", ""));
                 content = content + "\n" + "------------------------\n";
 
                 content = content + "\n" + "step 02: take one AID";
@@ -170,8 +189,12 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
                 if (isAddCommandResponseData) {
                     content = content + "\n" + "apduSelectPidCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidCommand());
                     content = content + "\n" + "apduSelectPidResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidResponse());
+                    etAnalyzeApduCommandSelectPid.setText(BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidCommand()));
+                    etAnalyzeApduResponseSelectPid.setText(BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidCommand()));
+
                 }
                 content = content + "\n" + "apduSelectPidParsed:\n" + emvCardSingleAid.getApduSelectPidParsed();
+                etAnalyzeApduResponseSelectPidParsed.setText(emvCardSingleAid.getApduSelectPidParsed().replace("\r", "").replace("\n", ""));
                 content = content + "\n" + "------------------------\n";
 
                 content = content + "\n" + "step 04: get Processing Options (PDOL)";
