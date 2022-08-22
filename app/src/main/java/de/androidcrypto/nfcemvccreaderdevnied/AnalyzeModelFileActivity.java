@@ -88,9 +88,28 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
     TextInputEditText etAnalyzeApduResponseGpo;
     TextInputLayout etAnalyzeApduResponseGpoParsedDecoration;
     TextInputEditText etAnalyzeApduResponseGpoParsed;
-    
-    
-    
+
+    TextInputLayout etAnalyzeApduCommandGpoVisaDecoration;
+    TextInputEditText etAnalyzeApduCommandGpoVisa;
+    TextInputLayout etAnalyzeApduResponseGpoVisaDecoration;
+    TextInputEditText etAnalyzeApduResponseGpoVisa;
+    TextInputLayout etAnalyzeApduResponseGpoVisaParsedDecoration;
+    TextInputEditText etAnalyzeApduResponseGpoVisaParsed;
+
+    TextInputLayout etAnalyzeResponseMessageTemplate1Decoration;
+    TextInputEditText etAnalyzeResponseMessageTemplate1;
+    TextInputLayout etAnalyzeResponseMessageTemplate1ParsedDecoration;
+    TextInputEditText etAnalyzeResponseMessageTemplate1Parsed;
+    TextInputLayout etAnalyzeResponseMessageTemplate2Decoration;
+    TextInputEditText etAnalyzeResponseMessageTemplate2;
+    TextInputLayout etAnalyzeResponseMessageTemplate2ParsedDecoration;
+    TextInputEditText etAnalyzeResponseMessageTemplate2Parsed;
+
+    TextInputLayout etAnalyzeAflDecoration;
+    TextInputEditText etAnalyzeAfl;
+    TextInputLayout etAnalyzeAflParsedDecoration;
+    TextInputEditText etAnalyzeAflParsed;
+
 
     EmvCardAids emvCardAids;
     List<byte[]> aids = new ArrayList<byte[]>();
@@ -130,7 +149,29 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
         etAnalyzeApduResponseGpo = findViewById(R.id.etAnalyzeApduResponseGpo);
         etAnalyzeApduResponseGpoParsedDecoration = findViewById(R.id.etAnalyzeApduResponseGpoParsedDecoration);
         etAnalyzeApduResponseGpoParsed = findViewById(R.id.etAnalyzeApduResponseGpoParsed);
-        
+
+        etAnalyzeApduCommandGpoVisaDecoration = findViewById(R.id.etAnalyzeApduCommandGpoVisaDecoration);
+        etAnalyzeApduCommandGpoVisa = findViewById(R.id.etAnalyzeApduCommandGpoVisa);
+        etAnalyzeApduResponseGpoVisaDecoration = findViewById(R.id.etAnalyzeApduResponseGpoVisaDecoration);
+        etAnalyzeApduResponseGpoVisa = findViewById(R.id.etAnalyzeApduResponseGpoVisa);
+        etAnalyzeApduResponseGpoVisaParsedDecoration = findViewById(R.id.etAnalyzeApduResponseGpoVisaParsedDecoration);
+        etAnalyzeApduResponseGpoVisaParsed = findViewById(R.id.etAnalyzeApduResponseGpoVisaParsed);
+
+        etAnalyzeResponseMessageTemplate1Decoration = findViewById(R.id.etAnalyzeMessageTemplate1ResponseDecoration);
+        etAnalyzeResponseMessageTemplate1 = findViewById(R.id.etAnalyzeMessageTemplate1Response);
+        etAnalyzeResponseMessageTemplate1ParsedDecoration = findViewById(R.id.etAnalyzeMessageTemplate1ResponseParsedDecoration);
+        etAnalyzeResponseMessageTemplate1Parsed = findViewById(R.id.etAnalyzeMessageTemplate1ResponseParsed);
+        etAnalyzeResponseMessageTemplate2Decoration = findViewById(R.id.etAnalyzeMessageTemplate2ResponseDecoration);
+        etAnalyzeResponseMessageTemplate2 = findViewById(R.id.etAnalyzeMessageTemplate2Response);
+        etAnalyzeResponseMessageTemplate2ParsedDecoration = findViewById(R.id.etAnalyzeMessageTemplate2ResponseParsedDecoration);
+        etAnalyzeResponseMessageTemplate2Parsed = findViewById(R.id.etAnalyzeMessageTemplate2ResponseParsed);
+
+        etAnalyzeAflDecoration = findViewById(R.id.etAnalyzeAflDecoration);
+        etAnalyzeAfl = findViewById(R.id.etAnalyzeAfl);
+        etAnalyzeAflParsedDecoration = findViewById(R.id.etAnalyzeAflParsedDecoration);
+        etAnalyzeAflParsed = findViewById(R.id.etAnalyzeAflParsed);
+
+
         // todo remove showAllFields - show only when file is selected
         // show all data fields
         showAllFields();
@@ -148,15 +189,24 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
         etAnalyzeApduCommandSelectPpseDecoration.setVisibility(View.VISIBLE);
         etAnalyzeApduCommandSelectPidDecoration.setVisibility(View.VISIBLE);
         etAnalyzeApduCommandGpoDecoration.setVisibility(View.VISIBLE);
+        etAnalyzeApduCommandGpoVisaDecoration.setVisibility(View.VISIBLE);
 
         etAnalyzeApduResponseSelectPpseDecoration.setVisibility(View.VISIBLE);
         etAnalyzeApduResponseSelectPidDecoration.setVisibility(View.VISIBLE);
         etAnalyzeApduResponseGpoDecoration.setVisibility(View.VISIBLE);
+        etAnalyzeApduResponseGpoVisaDecoration.setVisibility(View.VISIBLE);
+        etAnalyzeResponseMessageTemplate1Decoration.setVisibility(View.VISIBLE);
+        etAnalyzeResponseMessageTemplate2Decoration.setVisibility(View.VISIBLE);
+        etAnalyzeAflDecoration.setVisibility(View.VISIBLE);
+
 
         etAnalyzeApduResponseSelectPpseParsedDecoration.setVisibility(View.VISIBLE);
         etAnalyzeApduResponseSelectPidParsedDecoration.setVisibility(View.VISIBLE);
         etAnalyzeApduResponseGpoParsedDecoration.setVisibility(View.VISIBLE);
-
+        etAnalyzeApduResponseGpoVisaParsedDecoration.setVisibility(View.VISIBLE);
+        etAnalyzeResponseMessageTemplate1ParsedDecoration.setVisibility(View.VISIBLE);
+        etAnalyzeResponseMessageTemplate2ParsedDecoration.setVisibility(View.VISIBLE);
+        etAnalyzeAflParsedDecoration.setVisibility(View.VISIBLE);
 
     }
 
@@ -169,8 +219,6 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
 
         // show all data fields
         showAllFields();
-
-
 
         List<EmvCardSingleAid> emvCardSingleAids = new ArrayList<EmvCardSingleAid>();
         List<byte[]> aids = new ArrayList<byte[]>();
@@ -210,7 +258,7 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
                     content = content + "\n" + "apduSelectPidCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidCommand());
                     content = content + "\n" + "apduSelectPidResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidResponse());
                     etAnalyzeApduCommandSelectPid.setText(BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidCommand()));
-                    etAnalyzeApduResponseSelectPid.setText(BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidCommand()));
+                    etAnalyzeApduResponseSelectPid.setText(BytesUtils.bytesToString(emvCardSingleAid.getApduSelectPidResponse()));
 
                 }
                 content = content + "\n" + "apduSelectPidParsed:\n" + emvCardSingleAid.getApduSelectPidParsed();
@@ -221,8 +269,11 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
                 if (isAddCommandResponseData) {
                     content = content + "\n" + "apduGetProcessingOptionsCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsCommand());
                     content = content + "\n" + "apduGetProcessingOptionsResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsResponse());
+                    etAnalyzeApduCommandGpo.setText(BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsCommand()));
+                    etAnalyzeApduResponseGpo.setText(BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsResponse()));
                 }
                 content = content + "\n" + "apduGetProcessingOptionsParsed:\n" + emvCardSingleAid.getApduGetProcessingOptionsParsed();
+                etAnalyzeApduResponseGpoParsed.setText(nullCheckReplaceString(emvCardSingleAid.getApduGetProcessingOptionsParsed()));
                 content = content + "\n" + "apduGetProcessingOptionsSucceed: " + emvCardSingleAid.isGetProcessingOptionsSucceed();
                 if (!emvCardSingleAid.isGetProcessingOptionsSucceed()) {
                     // this seems to be a VISA card that provides no AFL data - we need to use another PDOL command
@@ -230,8 +281,11 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
                     if (isAddCommandResponseData) {
                         content = content + "\n" + "apduGetProcessingOptionsVisaCommand:  " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaCommand());
                         content = content + "\n" + "apduGetProcessingOptionsVisaResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaResponse());
+                        etAnalyzeApduCommandGpoVisa.setText(BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaCommand()));
+                        etAnalyzeApduResponseGpoVisa.setText(BytesUtils.bytesToString(emvCardSingleAid.getApduGetProcessingOptionsVisaResponse()));
                     }
                     content = content + "\n" + "apduGetProcessingOptionsVisaParsed:\n" + emvCardSingleAid.getApduGetProcessingOptionsVisaParsed();
+                    etAnalyzeApduResponseGpoVisaParsed.setText(nullCheckReplaceString(emvCardSingleAid.getApduGetProcessingOptionsVisaParsed()));
                     content = content + "\n" + "apduGetProcessingOptionsVisaSucceed: " + emvCardSingleAid.isGetProcessingOptionsVisaSucceed();
                 }
                 content = content + "\n" + "------------------------\n";
@@ -239,16 +293,24 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
                 content = content + "\n" + "step 05: parse PDOL and GPO";
                 if (isAddCommandResponseData) {
                     content = content + "\n" + "MessageTemplate1Response: " + BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate1());
+                    etAnalyzeResponseMessageTemplate1.setText(BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate1()));
                 }
                 content = content + "\n" + "MessageTemplate1Parsed:\n" + emvCardSingleAid.getResponseMessageTemplate1Parsed();
+                etAnalyzeResponseMessageTemplate1Parsed.setText(emvCardSingleAid.getResponseMessageTemplate1Parsed());
                 if (isAddCommandResponseData) {
                     content = content + "\n" + "MessageTemplate2Response: " + BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate2());
+                    etAnalyzeResponseMessageTemplate2.setText(BytesUtils.bytesToString(emvCardSingleAid.getResponseMessageTemplate2()));
                 }
                 content = content + "\n" + "MessageTemplate2Parsed:\n" + emvCardSingleAid.getResponseMessageTemplate2Parsed();
+                etAnalyzeResponseMessageTemplate2Parsed.setText(emvCardSingleAid.getResponseMessageTemplate2Parsed());
                 if (isAddCommandResponseData) {
                     content = content + "\n" + "applicationFileLocatorResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApplicationFileLocator());
+                    etAnalyzeAfl.setText(BytesUtils.bytesToString(emvCardSingleAid.getApplicationFileLocator()));
                 }
                 content = content + "\n" + "applicationFileLocatorParsed:\n" + emvCardSingleAid.getApplicationFileLocatorParsed();
+                if (emvCardSingleAid.getApplicationFileLocatorParsed() != null) {
+                etAnalyzeAflParsed.setText(emvCardSingleAid.getApplicationFileLocatorParsed());}
+
                 content = content + "\n" + "------------------------\n";
 
                 content = content + "\n" + "step 06: read records from AFL";
@@ -415,7 +477,8 @@ public class AnalyzeModelFileActivity extends AppCompatActivity {
                 byte[] data = TlvUtil.getValue(logFormatResponse, EmvTags.LOG_FORMAT);
                 if (isShowTagDetailDeepData) {
                     content = content + "\n" + BytesUtils.bytesToString(data);
-                    content = content + "\n" + new String(data);
+                    if (data != null) {content = content + "\n" + new String(data);}
+
                 }
                 // build a new tag
                 // todo should we save it unter 9F 4F as well ?
@@ -630,6 +693,15 @@ Cristian Radu
 
         readResult.setText(content);
     }
+
+    private static String nullCheckReplaceString(String data) {
+        if (data != null) {
+            return data.replace("\r", "").replace("\n", "");
+        } else {
+            return "";
+        }
+    }
+
 
     /**
      * section for deep card analyzing end

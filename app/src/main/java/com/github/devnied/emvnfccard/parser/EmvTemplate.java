@@ -572,6 +572,7 @@ public class EmvTemplate {
         } else {
             emvCardSingleAid.setGetProcessingOptionsVisaSucceed(false);
         }
+        emvCardSingleAid.setApduGetProcessingOptionsVisaCommand(pdolNew);
         emvCardSingleAid.setApduGetProcessingOptionsVisaResponse(gpo);
         emvCardSingleAid.setApduGetProcessingOptionsVisaParsed(TlvUtil.prettyPrintAPDUResponse(gpo));
         return gpo;
@@ -610,8 +611,8 @@ public class EmvTemplate {
         System.out.println("#*# getGetProcessingOptionsCommand: " + BytesUtils.bytesToString(apduGetProcessingOptionsCommand));
         byte[] apduGetProcessingOptionsResponse = provider.transceive(apduGetProcessingOptionsCommand);
         // todo store in emvCardAnalyze
-        //emvCardAnalyze.setApduGetProcessingOptionsCommand(apduGetProcessingOptionsCommand);
-        //emvCardAnalyze.setApduGetProcessingOptionsResponse(apduGetProcessingOptionsResponse);
+        emvCardAnalyze.setApduGetProcessingOptionsCommand(apduGetProcessingOptionsCommand);
+        emvCardAnalyze.setApduGetProcessingOptionsResponse(apduGetProcessingOptionsResponse);
         return apduGetProcessingOptionsResponse;
         //return template.get().getProvider().transceive(new CommandApdu(CommandEnum.GPO, out.toByteArray(), 0).toBytes());
     }
@@ -740,6 +741,9 @@ public class EmvTemplate {
             // Extract Afl
             System.out.println("*#* extractCommonsCardData extract AFL");
             List<Afl> listAfl = extractAfl(data);
+
+            // todo do we have a field in the model ?
+            //emvCardSingleAid.setAfls(listAfl);
             // for each AFL
             List<byte[]> apduReadRecordsCommand = new ArrayList<byte[]>();
             List<byte[]> apduReadRecordsResponse = new ArrayList<byte[]>();
