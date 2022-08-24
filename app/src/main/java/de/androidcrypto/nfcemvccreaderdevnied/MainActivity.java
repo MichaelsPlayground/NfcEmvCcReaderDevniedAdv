@@ -815,6 +815,16 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             }
         });
 
+        MenuItem mImportModelFile2 = menu.findItem(R.id.action_import_model_file_2);
+        mImportModelFile2.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, ImportModelFile2Activity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
         MenuItem mClearDump = menu.findItem(R.id.action_clear_dump);
         mClearDump.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override

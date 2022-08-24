@@ -22,6 +22,9 @@
             android:name=".ImportModelFileActivity"
             android:exported="false" />
         <activity
+            android:name=".ImportModelFile2Activity"
+            android:exported="false" />
+        <activity
             android:name=".AnalyzeModelFileActivity"
             android:exported="false" />
         <activity
