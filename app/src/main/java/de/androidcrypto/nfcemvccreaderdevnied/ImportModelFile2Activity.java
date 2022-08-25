@@ -14,9 +14,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -70,6 +74,7 @@ public class ImportModelFile2Activity extends AppCompatActivity {
     SwitchMaterial showCommandData;
     SwitchMaterial showResponseData;
     SwitchMaterial showResponseParsedData;
+    SwitchMaterial showResponseEntryDetailsData;
 
     SwitchMaterial showTagDetailData;
     SwitchMaterial showTagDetailDeepData;
@@ -80,6 +85,7 @@ public class ImportModelFile2Activity extends AppCompatActivity {
     static boolean isPrintCommandData = true; // todo check for defaults equal to form
     static boolean isPrintResponseData = true; // todo check for defaults equal to form
     static boolean isPrintResponseParsedData = true; // todo check for defaults equal to form
+    static boolean isPrintResponseEntryDetails = true;
 
     private static final int REQUEST_PERMISSION_READ_EXTERNAL_STORAGE = 101;
 
@@ -96,6 +102,7 @@ public class ImportModelFile2Activity extends AppCompatActivity {
         showCommandData = findViewById(R.id.swImport2ShowCommandDataSwitch);
         showResponseData = findViewById(R.id.swImport2ShowResponseDataSwitch);
         showResponseParsedData = findViewById(R.id.swImport2ShowResponseParsedDataSwitch);
+        showResponseEntryDetailsData = findViewById(R.id.swImport2ShowResponseEntryDetailsDataSwitch);
 
         addCommandResponseData = findViewById(R.id.swImportAddCommandResponseDataSwitch);
         showTagDetailData = findViewById(R.id.swImportShowTagDetailDataSwitch);
@@ -131,6 +138,7 @@ public class ImportModelFile2Activity extends AppCompatActivity {
         isPrintCommandData = showCommandData.isChecked();
         isPrintResponseData = showResponseData.isChecked();
         isPrintResponseParsedData = showResponseParsedData.isChecked();
+        isPrintResponseEntryDetails = showResponseEntryDetailsData.isChecked();
 
         List<EmvCardSingleAid> emvCardSingleAids = new ArrayList<EmvCardSingleAid>();
         List<byte[]> aids = new ArrayList<byte[]>();
@@ -157,6 +165,11 @@ public class ImportModelFile2Activity extends AppCompatActivity {
                 if (isPrintCommandData) content = content + "\n" + "\n" + "apduSelectPpseCommand:  " + printCommand(emvCardSingleAid.getApduSelectPpseCommand());
                 if (isPrintResponseData) content = content + "\n" + "\n" + "apduSelectPpseResponse: " + printResponse(emvCardSingleAid.getApduSelectPpseResponse());
                 if (isPrintResponseParsedData) content = content + "\n" + "\n" + "apduSelectPpseParsed:\n" + printResponseParsed(emvCardSingleAid.getApduSelectPpseParsed());
+                List<TagNameValue> tagListApduSelectPpseResponse = new ArrayList<TagNameValue>();
+                String contentApduSelectPpseResponse = parseAndPrintApduRespond(emvCardSingleAid.getApduSelectPpseResponse(), tagListApduSelectPpseResponse);
+                tagListTemp.addAll(tagListApduSelectPpseResponse);
+                if (isPrintResponseEntryDetails) content = content + "\n" + "\n" + pfhRead.buildHeader("apduSelectPpseDetails")
+                        + "\n" + contentApduSelectPpseResponse;
 
                 content  += "\n" + "\n" + pfh.buildHeader("step 02: select one AID");
                 content += "\n" + "\n" + "selectedAid: " + BytesUtils.bytesToString(selectedAid);
@@ -233,11 +246,16 @@ public class ImportModelFile2Activity extends AppCompatActivity {
                 content = content + "\n" + "";
                 content = content + "\n" + "------------------------\n";
             } // this is the basic content
+
+
+
+
         //}
 
         // lets analyze the data deeper
         //if (isShowTagDetailDeepData) {
         content = content + "\n" + "\n" + " === Deep analyze of card data ===";
+
         content  = content + "\n" + pfh.buildHeader("Deep analyze of card data");
         content = content + "\n" + "The model contains data for " + aidsSize + " aids\n";
         for (int i = 0; i < aidsSize; i++) {
@@ -246,6 +264,7 @@ public class ImportModelFile2Activity extends AppCompatActivity {
             content = content + "\n" + "aid nr " + (i + 1) + " : " + BytesUtils.bytesToString(selectedAid);
 
             content = content + "\n" + "== try to get all tags in apduSelectPpseResponse ==";
+            //todo delete
             byte[] apduSelectPpseResponse = emvCardSingleAid.getApduSelectPpseResponse();
             List<TagNameValue> tagListApduSelectPpseResponse = new ArrayList<TagNameValue>();
             String contentApduSelectPpseResponse = parseAndPrintApduRespond(apduSelectPpseResponse, tagListApduSelectPpseResponse);
@@ -308,21 +327,21 @@ public class ImportModelFile2Activity extends AppCompatActivity {
                 }
                 tagListTemp.addAll(tagListApduGetProcessingOptionsVisaResponse);
             } else {
-                content = content + "\n" + "no apduGetProcessingOptionsVisaResponse available" + "\n";
+                content += "\n" + "no apduGetProcessingOptionsVisaResponse available" + "\n";
             }
 
             content = content + "\n" + "------------------------\n";
 
-            // some data were onl available with a single get data command
-            content = content + "\n" + "\n" + "== Single get data information ==";
-            content  = content + "\n" + pfh.buildHeader("Single get data information");
+            // some data were only available with a single get data command
 
-            content = content + "\n" + "== Left Pin Try Counter ==";
+            content  += "\n" + "\n" + pfh.buildHeader("Single get data information");
+
+            content += "\n" + "\n" + pfhRead.buildHeader("Left Pin Try Counter");
             byte[] leftPinTryCounterResponse = emvCardSingleAid.getCardLeftPinTryResponse();
             if (leftPinTryCounterResponse != null) {
                 byte[] data = TlvUtil.getValue(leftPinTryCounterResponse, EmvTags.PIN_TRY_COUNTER);
                 if (isShowTagDetailDeepData) {
-                    content = content + "\n" + BytesUtils.bytesToString(data);
+                    content += "\n" + "\n" + BytesUtils.bytesToString(data);
                 }
                 // build a new tag
                 // todo should we save it unter 9F 17 as well ?
@@ -330,15 +349,15 @@ public class ImportModelFile2Activity extends AppCompatActivity {
                 tnvNew = tagBuild(new byte[]{(byte) 0xfe, 0x01}, "PIN left try counter", TagValueTypeEnum.BINARY, data);
                 tagListTemp.add(tnvNew);
             } else {
-                content = content + "\n" + "no leftPinTryCounterResponse available" + "\n";
+                content += "\n" + "\n" + "no leftPinTryCounterResponse available";
             }
 
-            content = content + "\n" + "== ATC ==";
+            content += "\n" + "\n" + pfhRead.buildHeader("ATC");
             byte[] atcResponse = emvCardSingleAid.getCardAtcResponse();
             if (atcResponse != null) {
                 byte[] data = TlvUtil.getValue(atcResponse, EmvTags.APP_TRANSACTION_COUNTER);
                 if (isShowTagDetailDeepData) {
-                    content = content + "\n" + BytesUtils.bytesToString(data);
+                    content += "\n" + "\n" + BytesUtils.bytesToString(data);
                 }
                 // build a new tag
                 // todo should we save it unter 9F 36 as well ?
@@ -346,15 +365,15 @@ public class ImportModelFile2Activity extends AppCompatActivity {
                 tnvNew = tagBuild(new byte[]{(byte) 0xfe, 0x02}, "ATC", TagValueTypeEnum.BINARY, data);
                 tagListTemp.add(tnvNew);
             } else {
-                content = content + "\n" + "no atcResponse available" + "\n";
+                content += "\n" + "\n" + "no atcResponse available";
             }
 
-            content = content + "\n" + "== Last Online ATC ==";
+            content += "\n" + "\n" + pfhRead.buildHeader("Last Online ATC");
             byte[] lastOnlineAtcResponse = emvCardSingleAid.getCardLastOnlineAtcResponse();
             if (lastOnlineAtcResponse != null) {
                 byte[] data = TlvUtil.getValue(lastOnlineAtcResponse, EmvTags.LAST_ONLINE_ATC_REGISTER);
                 if (isShowTagDetailDeepData) {
-                    content = content + "\n" + BytesUtils.bytesToString(data);
+                    content += "\n" + "\n" + BytesUtils.bytesToString(data);
                 }
                 // build a new tag
                 // todo should we save it unter 9F 13 as well ?
@@ -362,15 +381,15 @@ public class ImportModelFile2Activity extends AppCompatActivity {
                 tnvNew = tagBuild(new byte[]{(byte) 0xfe, 0x03}, "Last online ATC", TagValueTypeEnum.BINARY, data);
                 tagListTemp.add(tnvNew);
             } else {
-                content = content + "\n" + "no lastOnlineAtcResponse available" + "\n";
+                content += "\n" + "\n" + "no lastOnlineAtcResponse available";
             }
 
-            content = content + "\n" + "== Log Format ==";
+            content += "\n" + "\n" + pfhRead.buildHeader("Log Format");
             byte[] logFormatResponse = emvCardSingleAid.getCardLogFormatResponse();
             if (logFormatResponse != null) {
                 byte[] data = TlvUtil.getValue(logFormatResponse, EmvTags.LOG_FORMAT);
                 if (isShowTagDetailDeepData) {
-                    content = content + "\n" + BytesUtils.bytesToString(data);
+                    content += "\n" + "\n" + BytesUtils.bytesToString(data);
                     if (data != null) {
                         content = content + "\n" + new String(data);
                     }
@@ -381,7 +400,7 @@ public class ImportModelFile2Activity extends AppCompatActivity {
                 tnvNew = tagBuild(new byte[]{(byte) 0xfe, 0x04}, "Log Format", TagValueTypeEnum.TEXT, data);
                 tagListTemp.add(tnvNew);
             } else {
-                content = content + "\n" + "no logFormatResponse available" + "\n";
+                content += "\n" + "\n" + "no logFormatResponse available";
             }
 
         }
@@ -415,22 +434,21 @@ public class ImportModelFile2Activity extends AppCompatActivity {
         content = content + "\n" + "analyze some tag data";
         List<TagNameValue> tagListNew = new ArrayList<TagNameValue>(); // a list only for new tags
 
-        content = content + "\n" + "== Application Interchange Profile data ==\n";
-        content  = content + "\n" + pfh.buildHeader("Application Interchange Profile data");
+        content  += "\n" + "\n" + pfh.buildHeader("Application Interchange Profile data");
         TagNameValue tnvAip = findTnv(EmvTags.APPLICATION_INTERCHANGE_PROFILE.getTagBytes(), tagListTemp);
         if (tnvAip != null) {
             byte[] aipByte = tnvAip.getTagValueBytes();
             ApplicationInterchangeProfile aip =
                     new ApplicationInterchangeProfile(aipByte[0], aipByte[1]);
-            content = content + "\n" + "== Application Interchange Profile data ==\n";
-            content = content + "\n" + aip.getCDASupportedString();
-            content = content + "\n" + aip.getSDASupportedString();
-            content = content + "\n" + aip.getDDASupportedString();
-            content = content + "\n" + aip.getIssuerAuthenticationIsSupportedString();
-            content = content + "\n" + aip.getTerminalRiskManagementToBePerformedString();
-            content = content + "\n" + aip.getCardholderVerificationSupportedString();
-            content = content + "\n" + "toString: " + aip.toString();
-            content = content + "\n" + "== Application Interchange Profile data end ==\n";
+            content += "\n" + "\n" + "== Application Interchange Profile data ==\n";
+            content += "\n" + aip.getCDASupportedString();
+            content += "\n" + aip.getSDASupportedString();
+            content += "\n" + aip.getDDASupportedString();
+            content += "\n" + aip.getIssuerAuthenticationIsSupportedString();
+            content += "\n" + aip.getTerminalRiskManagementToBePerformedString();
+            content += "\n" + aip.getCardholderVerificationSupportedString();
+            content += "\n" + "toString: " + aip.toString();
+
             // build new tags
             TagNameValue tnvNew = new TagNameValue();
             tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x01}, "AIP raw data", TagValueTypeEnum.BINARY, aipByte);
@@ -479,18 +497,17 @@ public class ImportModelFile2Activity extends AppCompatActivity {
              */
 
         } else {
-            content = content + "\n" + "== no Application Interchange Profile data available ==\n";
+            content = content + "\n" + "== no Application Interchange Profile data available ==";
         }
 
-        content = content + "\n" + "== Cardholder Verification Method (CVM) data ==";
-        content  = content + "\n" + pfh.buildHeader("Cardholder Verification Method (CVM) data");
+        content += "\n" + "\n" + "== Cardholder Verification Method (CVM) data ==";
+        content  += "\n" + "\n" + pfh.buildHeader("Cardholder Verification Method (CVM) data");
         TagNameValue tnvCvm = findTnv(EmvTags.CVM_LIST.getTagBytes(), tagListTemp);
         if (tnvCvm != null) {
             byte[] cvmByte = tnvCvm.getTagValueBytes();
-            content = content + "\n" + "== Cardholder Verification Method (CVM) data ==";
+            content += "\n" + "\n" + "== Cardholder Verification Method (CVM) data ==";
             CVMList cvmList = new CVMList(cvmByte);
-            content = content + "\n" + cvmList.toString();
-            content = content + "\n" + "== Cardholder Verification Method (CVM) data ==";
+            content += "\n" + cvmList.toString();
 
             // build new tags
             TagNameValue tnvNew = new TagNameValue();
@@ -498,17 +515,17 @@ public class ImportModelFile2Activity extends AppCompatActivity {
             tagListNew.add(tnvNew);
 
         } else {
-            content = content + "\n" + "no Cardholder Verification Method (CVM) data available";
+            content += "\n" + "\n" + "no Cardholder Verification Method (CVM) data available";
         }
 
         // as some cards do not provide the pan, expireDate in a dedicated tag we need to analyze track1 or track2 data
         // for visa cards it is mostly track2 equivalent data
-        content = content + "\n" + "\n" + "== Track2 equivalent data ==";
+
         content  = content + "\n" + pfh.buildHeader("Track2 equivalent data");
         TagNameValue tnvT2ED = findTnv(EmvTags.TRACK_2_EQV_DATA.getTagBytes(), tagListTemp);
         if (tnvT2ED != null) {
             byte[] t2edByte = tnvT2ED.getTagValueBytes();
-            content = content + "\n" + "== Track2 equivalent data available ==";
+            content += "\n" + "\n" + "== Track2 equivalent data available ==";
             EmvTrack2 emvTrack2 = TrackUtils.extractTrack2EquivalentData(t2edByte);
             String cardNumber = emvTrack2.getCardNumber();
             Date expireDate = emvTrack2.getExpireDate();
@@ -521,10 +538,9 @@ public class ImportModelFile2Activity extends AppCompatActivity {
             String service3GetAllowedServices = service.getServiceCode3().getAllowedServices();
             String service3PinRequirements = service.getServiceCode3().getPinRequirements();
 
-            content  = content + "\n" + pfh.buildHeader("Track2 equivalent extracted data");
-            content = content + "\n" + "CardNumber: " + cardNumber;
-            content = content + "\n" + "ExpireDate: " + expireDateString;
-            content = content + "\n" + "== == Track2 equivalent data ==";
+            content += "\n" + "\n" + pfh.buildHeader("Track2 equivalent extracted data");
+            content += "\n" + "CardNumber: " + cardNumber;
+            content += "\n" + "ExpireDate: " + expireDateString;
 
             // build new tags
             TagNameValue tnvNew = new TagNameValue();
@@ -591,7 +607,13 @@ Cristian Radu
         content = content + "\n" + "";
         content = content + "\n" + "";
 
-
+        /*
+        SpannableString spannableStr = new SpannableString(content);
+        BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(Color.GREEN);
+        spannableStr.setSpan(backgroundColorSpan, 6, 10, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        BackgroundColorSpan backgroundColorSpanRed = new BackgroundColorSpan(Color.RED);
+        spannableStr.setSpan(backgroundColorSpanRed, 40, 50, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        readResult.setText(spannableStr);*/
         readResult.setText(content);
     }
 
@@ -644,10 +666,10 @@ Cristian Radu
         String output = "";
         tagApduResponse(apduResponse, 0, tagList);
         int tagListSize = tagList.size();
-        output = output + "\n" + "== tagListSize: " + tagListSize;
+        output += "\n" + "== tagListSize: " + tagListSize;
         for (int i = 0; i < tagListSize; i++) {
             TagNameValue tag = tagList.get(i);
-            output = output + "\n" + "== tagNameValue " + i + "\n" +
+            output += "\n" + "== tagNameValue " + i + "\n" +
                     printTagNameValue(tag);
         }
         return output;

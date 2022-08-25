@@ -71,17 +71,17 @@ public class ApplicationInterchangeProfile {
 
     public String getSDASupportedString(){
         if(isSDASupported()){
-            return "Static Data Authentication (SDA) supported";
+            return "Static Data Authentication (SDA) is supported";
         }else{
-            return "Static Data Authentication (SDA) not supported";
+            return "Static Data Authentication (SDA) is not supported";
         }
     }
 
     public String getDDASupportedString(){
         if(isDDASupported()){
-            return "Dynamic Data Authentication (DDA) supported";
+            return "Dynamic Data Authentication (DDA) is supported";
         }else{
-            return "Dynamic Data Authentication (DDA) not supported";
+            return "Dynamic Data Authentication (DDA) is not supported";
         }
     }
 
@@ -111,9 +111,9 @@ public class ApplicationInterchangeProfile {
 
     public String getCDASupportedString(){
         if(isCDASupported()){
-            return "CDA supported";
+            return "Combined Data Authentication (CDA) is supported";
         }else{
-            return "CDA not supported";
+            return "Combined Data Authentication (CDA) is not supported";
         }
     }
 
