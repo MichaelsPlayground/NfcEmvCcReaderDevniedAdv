@@ -25,14 +25,11 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.github.devnied.emvnfccard.enums.CommandEnum;
 import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
 import com.github.devnied.emvnfccard.parser.EmvTemplate;
-import com.github.devnied.emvnfccard.utils.CommandApdu;
 import com.github.devnied.emvnfccard.utils.ResponseUtils;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 
@@ -47,8 +44,8 @@ import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAnalyze;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
-import de.androidcrypto.nfcemvccreaderdevnied.utils.ApplicationInterchangeProfile;
-import de.androidcrypto.nfcemvccreaderdevnied.utils.CVMList;
+import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.ApplicationInterchangeProfile;
+import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.CVMList;
 import fr.devnied.bitlib.BytesUtils;
 
 public class VerifyPin2 extends AppCompatActivity implements NfcAdapter.ReaderCallback {

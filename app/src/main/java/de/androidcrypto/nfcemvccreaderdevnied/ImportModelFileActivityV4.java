@@ -52,8 +52,8 @@ import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardDetail;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import de.androidcrypto.nfcemvccreaderdevnied.model.TagNameValue;
-import de.androidcrypto.nfcemvccreaderdevnied.utils.ApplicationInterchangeProfile;
-import de.androidcrypto.nfcemvccreaderdevnied.utils.CVMList;
+import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.ApplicationInterchangeProfile;
+import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.CVMList;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.DateUtils;
 import fr.devnied.bitlib.BytesUtils;
 

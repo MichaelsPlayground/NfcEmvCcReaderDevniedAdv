@@ -1,4 +1,4 @@
-package de.androidcrypto.nfcemvccreaderdevnied.utils;
+package de.androidcrypto.nfcemvccreaderdevnied.sascUtils;
 
 /*
  * Copyright 2010 sasc

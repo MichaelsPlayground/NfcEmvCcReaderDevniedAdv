@@ -28,34 +28,22 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.github.devnied.emvnfccard.enums.EmvCardScheme;
-import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
-import com.github.devnied.emvnfccard.model.Application;
-import com.github.devnied.emvnfccard.model.EmvCard;
-
 import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAnalyze;
 
-import com.github.devnied.emvnfccard.model.enums.ServiceCode3Enum;
 import com.github.devnied.emvnfccard.parser.EmvTemplate;
 import com.github.devnied.emvnfccard.utils.ResponseUtils;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
-import de.androidcrypto.nfcemvccreaderdevnied.utils.ApplicationInterchangeProfile;
-import de.androidcrypto.nfcemvccreaderdevnied.utils.AtrUtils;
-import de.androidcrypto.nfcemvccreaderdevnied.utils.CVMList;
 import fr.devnied.bitlib.BytesUtils;
 
 public class MainActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {

@@ -24,13 +24,11 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.github.devnied.emvnfccard.enums.SwEnum;
-import com.github.devnied.emvnfccard.enums.TagTypeEnum;
 import com.github.devnied.emvnfccard.enums.TagValueTypeEnum;
 import com.github.devnied.emvnfccard.exception.TlvException;
 import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
 import com.github.devnied.emvnfccard.iso7816emv.ITag;
 import com.github.devnied.emvnfccard.iso7816emv.TLV;
-import com.github.devnied.emvnfccard.iso7816emv.TagAndLength;
 import com.github.devnied.emvnfccard.model.EmvTrack2;
 import com.github.devnied.emvnfccard.model.Service;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
@@ -40,7 +38,6 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import net.sf.scuba.tlv.TLVInputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -56,8 +53,8 @@ import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardDetail;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import de.androidcrypto.nfcemvccreaderdevnied.model.TagNameValue;
-import de.androidcrypto.nfcemvccreaderdevnied.utils.ApplicationInterchangeProfile;
-import de.androidcrypto.nfcemvccreaderdevnied.utils.CVMList;
+import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.ApplicationInterchangeProfile;
+import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.CVMList;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.DateUtils;
 import fr.devnied.bitlib.BytesUtils;
 

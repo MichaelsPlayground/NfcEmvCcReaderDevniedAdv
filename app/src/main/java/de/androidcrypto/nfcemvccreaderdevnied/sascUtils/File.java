@@ -1,4 +1,4 @@
-package de.androidcrypto.nfcemvccreaderdevnied.utils;
+package de.androidcrypto.nfcemvccreaderdevnied.sascUtils;
 
 /*
  * Copyright 2010 sasc
@@ -19,19 +19,8 @@ package de.androidcrypto.nfcemvccreaderdevnied.utils;
 /**
  *
  * @author sasc
- *
- * source: https://github.com/sasc999/javaemvreader/blob/master/src/main/java/sasc/iso7816/SmartCardException.java
+ * source: https://github.com/sasc999/javaemvreader/blob/master/src/main/java/sasc/iso7816/File.java
  */
-public class SmartCardException extends RuntimeException{
-
-    public SmartCardException(String message){
-        super(message);
-    }
-
-    public SmartCardException(String message, Throwable cause){
-        super(message, cause);
-    }
-    public SmartCardException(Throwable cause){
-        super(cause);
-    }
+public interface File {
+    //TODO Implement or delete
 }

@@ -14,13 +14,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
-import android.text.SpannableString;
-import android.text.Spanned;
-import android.text.style.BackgroundColorSpan;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -29,13 +25,11 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.github.devnied.emvnfccard.enums.SwEnum;
-import com.github.devnied.emvnfccard.enums.TagTypeEnum;
 import com.github.devnied.emvnfccard.enums.TagValueTypeEnum;
 import com.github.devnied.emvnfccard.exception.TlvException;
 import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
 import com.github.devnied.emvnfccard.iso7816emv.ITag;
 import com.github.devnied.emvnfccard.iso7816emv.TLV;
-import com.github.devnied.emvnfccard.iso7816emv.TagAndLength;
 import com.github.devnied.emvnfccard.model.EmvTrack2;
 import com.github.devnied.emvnfccard.model.Service;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
@@ -45,7 +39,6 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import net.sf.scuba.tlv.TLVInputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -61,8 +54,11 @@ import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardDetail;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import de.androidcrypto.nfcemvccreaderdevnied.model.TagNameValue;
-import de.androidcrypto.nfcemvccreaderdevnied.utils.ApplicationInterchangeProfile;
-import de.androidcrypto.nfcemvccreaderdevnied.utils.CVMList;
+import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.ApplicationElementaryFile;
+import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.ApplicationFileLocator;
+import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.ApplicationInterchangeProfile;
+import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.CVMList;
+import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.ShortFileIdentifier;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.DateUtils;
 import fr.devnied.bitlib.BytesUtils;
 
@@ -215,6 +211,30 @@ public class ImportModelFile2Activity extends AppCompatActivity {
                     content += "\n" + "\n" + "applicationFileLocatorResponse: " + BytesUtils.bytesToString(emvCardSingleAid.getApplicationFileLocator());
                 }
                 content += "\n" + "\n" + "applicationFileLocatorParsed:\n" + emvCardSingleAid.getApplicationFileLocatorParsed();
+                content += "\n"  + "\n" + "------------------------\n";
+
+                content += "\n"  + "\n" + "generate ApplicationFileLocator class\n";
+                ApplicationFileLocator applicationFileLocator = new ApplicationFileLocator(emvCardSingleAid.getApplicationFileLocator());
+                content += "\n"  + "\n" + applicationFileLocator.toString();
+                List<ApplicationElementaryFile> aefList = applicationFileLocator.getApplicationElementaryFiles();
+                int aefListSize = aefList.size();
+                content += "\n"  + "\n" + "we have " + aefListSize + " files to analyze";
+                for (int aefListCounter = 0; aefListCounter < aefListSize; aefListCounter++) {
+                    ApplicationElementaryFile aef = aefList.get(aefListCounter);
+                    //ShortFileIdentifier aefSfi = aef.getSFI();
+                    //content += "\n"  + "SFI: " + aefSfi.toString();
+                    int aefStartRecordNumber = aef.getStartRecordNumber();
+                    int aefEndRecordNumber = aef.getEndRecordNumber();
+                    int aefTotalRecordNumber = aefEndRecordNumber - aefStartRecordNumber + 1;
+                    int aefNumberOfRecordsInvoldedInOfflineAuthorisation = aef.getNumRecordsInvolvedInOfflineDataAuthentication();
+
+                    content += "\n"  + "aef number: " + (aefListCounter + 1);
+                    content += "\n"  + "read record from " + aefStartRecordNumber +
+                    " to " + aefEndRecordNumber + " = total of " + aefTotalRecordNumber;
+                    content += "\n"  + "number of records involded in offline authorisation: " + aefNumberOfRecordsInvoldedInOfflineAuthorisation;
+                    content += "\n"  + "------------------------\n";
+                }
+
                 content += "\n"  + "\n" + "------------------------\n";
 
                 content  += "\n" + "\n" + pfh.buildHeader("step 06: read records from AFL");
