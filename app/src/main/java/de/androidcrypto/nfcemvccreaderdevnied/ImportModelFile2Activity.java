@@ -214,27 +214,31 @@ public class ImportModelFile2Activity extends AppCompatActivity {
                 content += "\n"  + "\n" + "------------------------\n";
 
                 content += "\n"  + "\n" + "generate ApplicationFileLocator class\n";
-                ApplicationFileLocator applicationFileLocator = new ApplicationFileLocator(emvCardSingleAid.getApplicationFileLocator());
-                content += "\n"  + "\n" + applicationFileLocator.toString();
-                List<ApplicationElementaryFile> aefList = applicationFileLocator.getApplicationElementaryFiles();
-                int aefListSize = aefList.size();
-                content += "\n"  + "\n" + "we have " + aefListSize + " files to analyze";
-                for (int aefListCounter = 0; aefListCounter < aefListSize; aefListCounter++) {
-                    ApplicationElementaryFile aef = aefList.get(aefListCounter);
-                    //ShortFileIdentifier aefSfi = aef.getSFI();
-                    //content += "\n"  + "SFI: " + aefSfi.toString();
-                    int aefStartRecordNumber = aef.getStartRecordNumber();
-                    int aefEndRecordNumber = aef.getEndRecordNumber();
-                    int aefTotalRecordNumber = aefEndRecordNumber - aefStartRecordNumber + 1;
-                    int aefNumberOfRecordsInvoldedInOfflineAuthorisation = aef.getNumRecordsInvolvedInOfflineDataAuthentication();
+                // check that we do have an ApplicationFileLocator
+                if (emvCardSingleAid.getApplicationFileLocator() != null) {
+                    ApplicationFileLocator applicationFileLocator = new ApplicationFileLocator(emvCardSingleAid.getApplicationFileLocator());
+                    content += "\n" + "\n" + applicationFileLocator.toString();
+                    List<ApplicationElementaryFile> aefList = applicationFileLocator.getApplicationElementaryFiles();
+                    int aefListSize = aefList.size();
+                    content += "\n" + "\n" + "we have " + aefListSize + " files to analyze";
+                    for (int aefListCounter = 0; aefListCounter < aefListSize; aefListCounter++) {
+                        ApplicationElementaryFile aef = aefList.get(aefListCounter);
+                        //ShortFileIdentifier aefSfi = aef.getSFI();
+                        //content += "\n"  + "SFI: " + aefSfi.toString();
+                        int aefStartRecordNumber = aef.getStartRecordNumber();
+                        int aefEndRecordNumber = aef.getEndRecordNumber();
+                        int aefTotalRecordNumber = aefEndRecordNumber - aefStartRecordNumber + 1;
+                        int aefNumberOfRecordsInvoldedInOfflineAuthorisation = aef.getNumRecordsInvolvedInOfflineDataAuthentication();
 
-                    content += "\n"  + "aef number: " + (aefListCounter + 1);
-                    content += "\n"  + "read record from " + aefStartRecordNumber +
-                    " to " + aefEndRecordNumber + " = total of " + aefTotalRecordNumber;
-                    content += "\n"  + "number of records involded in offline authorisation: " + aefNumberOfRecordsInvoldedInOfflineAuthorisation;
-                    content += "\n"  + "------------------------\n";
+                        content += "\n" + "aef number: " + (aefListCounter + 1);
+                        content += "\n" + "read record from " + aefStartRecordNumber +
+                                " to " + aefEndRecordNumber + " = total of " + aefTotalRecordNumber;
+                        content += "\n" + "number of records involded in offline authorisation: " + aefNumberOfRecordsInvoldedInOfflineAuthorisation;
+                        content += "\n" + "------------------------\n";
+                    }
+                } else {
+                    content += "\n"  + "\n" + "there is no application file locator available";
                 }
-
                 content += "\n"  + "\n" + "------------------------\n";
 
                 content  += "\n" + "\n" + pfh.buildHeader("step 06: read records from AFL");

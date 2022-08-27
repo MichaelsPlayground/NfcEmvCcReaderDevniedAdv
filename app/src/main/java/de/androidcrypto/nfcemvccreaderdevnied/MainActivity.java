@@ -239,6 +239,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     idContentString = idContentString + "\n" + "getData for PinTryCounter is not successfull";
                 }
 
+                /*
                 getDataResponse = parser.getDataLogFormat();
                 idContentString = idContentString + "\n" + "getDataResponse for LogFormat";
                 if (getDataResponse != null) {
@@ -248,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 } else {
                     idContentString = idContentString + "\n" + "getData is not successfull";
                 }
-
+*/
                 // log entry
                 // public static final ITag LOG_ENTRY = new TagImpl("9f4d", TagValueTypeEnum.BINARY, "Log Entry", "Provides the SFI of the Transaction Log file and its number of records");
                 //	public static final ITag MERCHANT_NAME_AND_LOCATION = new TagImpl("9f4e", TagValueTypeEnum.TEXT, "Merchant Name and Location", "Indicates the name and location of the merchant");

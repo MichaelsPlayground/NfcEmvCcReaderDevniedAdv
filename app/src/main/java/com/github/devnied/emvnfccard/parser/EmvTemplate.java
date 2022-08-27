@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -610,6 +611,8 @@ public class EmvTemplate {
         byte[] apduGetProcessingOptionsCommand = new CommandApdu(CommandEnum.GPO, out.toByteArray(), 0).toBytes();
         System.out.println("#*# getGetProcessingOptionsCommand: " + BytesUtils.bytesToString(apduGetProcessingOptionsCommand));
         byte[] apduGetProcessingOptionsResponse = provider.transceive(apduGetProcessingOptionsCommand);
+        emvCardSingleAid.setApduGetProcessingOptionsCommand(apduGetProcessingOptionsCommand);
+        emvCardSingleAid.setApduGetProcessingOptionsResponse(apduGetProcessingOptionsResponse);
         // todo store in emvCardAnalyze
         emvCardAnalyze.setApduGetProcessingOptionsCommand(apduGetProcessingOptionsCommand);
         emvCardAnalyze.setApduGetProcessingOptionsResponse(apduGetProcessingOptionsResponse);
