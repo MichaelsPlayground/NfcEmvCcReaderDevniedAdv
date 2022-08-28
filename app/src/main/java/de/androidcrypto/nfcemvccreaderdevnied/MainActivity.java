@@ -834,6 +834,16 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             }
         });
 
+        MenuItem mVerifyPin = menu.findItem(R.id.action_verify_pin);
+        mVerifyPin.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, VerifyPin.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
         return super.onCreateOptionsMenu(menu);
     }
 }

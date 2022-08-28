@@ -639,6 +639,7 @@ Cristian Radu
         spannableStr.setSpan(backgroundColorSpanRed, 40, 50, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
         readResult.setText(spannableStr);*/
         readResult.setText(content);
+        System.out.println(content);
     }
 
     public static String printCommand(byte[] command) {

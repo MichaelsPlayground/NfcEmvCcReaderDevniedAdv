@@ -270,7 +270,7 @@ public class CVRule {
     public void dump(PrintWriter pw, int indent) {
         pw.println(Util.getSpaces(indent) + "Cardholder Verification Rule");
         //String indentStr = Util.getSpaces(indent + Log.INDENT_SIZE);
-        String indentStr = Util.getSpaces(indent + 80);
+        String indentStr = Util.getSpaces(indent + 2);
 
         pw.println(indentStr + "Rule: "+getRuleString());
         pw.println(indentStr + "Condition Code: "+getConditionCodeDescription());

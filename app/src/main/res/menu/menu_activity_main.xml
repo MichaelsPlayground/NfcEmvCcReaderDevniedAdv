@@ -48,4 +48,9 @@
         android:title="Verify PIN"
         app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/action_verify_pin2"
+        android:title="Verify PIN 2"
+        app:showAsAction="never"/>
+
 </menu>
