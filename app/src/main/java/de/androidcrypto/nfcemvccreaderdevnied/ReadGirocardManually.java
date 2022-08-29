@@ -27,12 +27,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
+import com.github.devnied.emvnfccard.iso7816emv.TagAndLength;
+import com.github.devnied.emvnfccard.iso7816emv.impl.DefaultTerminalImpl;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.List;
 
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.CVMList;
@@ -108,21 +113,144 @@ public class ReadGirocardManually extends AppCompatActivity implements NfcAdapte
             content += "\n" + "AID is: A0 00 00 00 04 10 10"; // fixed for mastercard
 
             content += "\n" + "\n" + "Step 02: select AID";
-            byte[] selectAidCommand = BytesUtils.fromString("00 A4 04 00 09 A0 00 00 00 59 45 43 01 00 00");
+            //byte[] selectAidCommand = BytesUtils.fromString("00 A4 04 00 09 A0 00 00 00 59 45 43 01 00 00");
+            //byte[] selectAidCommand = BytesUtils.fromString("00 A4 04 00 0A A0 00 00 03 59 10 10 02 80 01 00");
+            //byte[] selectAidCommand = BytesUtils.fromString("00 A4 04 00 09 D2 76 00 00 25 47 41 01 00 00");
+
+            // this is for Visa
+            byte[] selectAidCommand = BytesUtils.fromString("00 A4 04 00 07 A0 00 00 00 03 10 10 00");
+
             content += "\n" + "selectAidCommand: " + BytesUtils.bytesToString(selectAidCommand);
             byte[] selectAidResponse = isoDep.transceive(selectAidCommand);
             content += "\n" + "selectAidResponse: " + BytesUtils.bytesToString(selectAidResponse);
             content += "\n" + "selectAidResponseParsed:\n " + TlvUtil.prettyPrintAPDUResponse(selectAidResponse);
 
             content += "\n" + "\n" + "Step 03: get processing options";
+
+            // find pdol = tag 9F 38 in selectAidResponse
+            /**
+             * for A0 00 00 00 59 45 43 01 00:   9F 38 06 -- Processing Options Data Object List (PDOL)
+             *                                     9F 02 06 -- Amount, Authorised (Numeric)
+             *                                     9F 1D 02 -- Terminal Risk Management Data
+             * AFL: 94 04 -- Application File Locator (AFL): 08 01 01 00 10 01 02 01 18 01 02 00 20 01 02 00
+             */
+            /**
+             * for A0 00 00 03 59 10 10 02 80 01: 9F 38 06 -- Processing Options Data Object List (PDOL)
+             *                                      9F 02 06 -- Amount, Authorised (Numeric)
+             *                                      9F 1D 02 -- Terminal Risk Management Data
+             * AFL: 94 04 -- Application File Locator (AFL): 08 01 01 00 10 01 02 01 18 01 02 00 20 01 02 00
+             */
+            /**
+             * for D2 76 00 00 25 47 41 01 00:    9F 38 09 -- Processing Options Data Object List (PDOL)
+             *                                      9F 33 02 -- Terminal Capabilities
+             *                                      9F 35 01 -- Terminal Type
+             *                                      9F 40 01 -- Additional Terminal Capabilities
+             * AFL: 94 04 -- Application File Locator (AFL): 08 02 05 00
+             */
+            /**
+             * THIS IS FOR VISA:
+             * for A0 00 00 00 03 10 10:          9F 38 18 -- Processing Options Data Object List (PDOL)
+             *                                      9F 66 04 -- Terminal Transaction Qualifiers
+             *                                      9F 02 06 -- Amount, Authorised (Numeric)
+             *                                      9F 03 06 -- Amount, Other (Numeric)
+             *                                      9F 1A 02 -- Terminal Country Code
+             *                                      95 05    -- Terminal Verification Results (TVR)
+             *                                      5F 2A 02 -- Transaction Currency Code
+             *                                      9A 03    -- Transaction Date
+             *                                      9C 01    -- Transaction Type
+             *                                      9F 37 04 -- Unpredictable Number
+             * AFL:
+             * 
+             * 
+             */
+            
+            
+            byte[] pdol = TlvUtil.getValue(selectAidResponse, EmvTags.PDOL);
+            boolean pdolAvailable = true;
+            if (pdol == null) {
+                System.out.println("no PDOL in selectAidResponse");
+                content += "\n" + "\n" + "no PDOL in selectAidResponse";
+                pdolAvailable = false;
+            } else {
+                content += "\n" + "\n" + "PDOL: " + BytesUtils.bytesToString(pdol);
+            }
+            // get the processing options from PDOL or construct an empty one
+            byte[] gpo = new byte[0];
+            content += "\n" + "\n" + "get the processing options from PDOL or construct an empty one";
+            if (!pdolAvailable) {
+                content += "\n" + "PDOL not available, construct an empty one";
+                gpo = BytesUtils.fromString("80 A8 00 00 02 83 00 00");
+            } else {
+                content += "\n" + "PDOL is available, read the PDOL list";
+                // List Tag and length from PDOL
+                List<TagAndLength> list = TlvUtil.parseTagAndLength(pdol);
+                content += "\n" + "we have " + list.size() + " tags in the PDOL list:";
+                int tagCount = 1;
+                int tagSumLength = 0;
+                for (TagAndLength tl : list) {
+                    content += "\n" + "tag " + tagCount + " ";
+                    byte[] tagBytes = tl.getTag().getTagBytes();
+                    content += "tagBytes: " + BytesUtils.bytesToString(tagBytes);
+                    String tagName = tl.getTag().getName();
+                    content += " tagName: " + tagName + " : ";
+                    int tagByteLength = tl.getTag().getNumTagBytes();
+                    // get the value behind the tag
+                    int value = tl.getBytes()[tagByteLength];
+                    tagSumLength += value;
+                    content += "tagValue: " + value;
+                    tagCount++;
+                }
+                content += "\n" + "The PDOL should be of a length of: " + tagSumLength;
+                // generate the PDOL with empty values
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                // the general header
+                byte[] pdolHeader = BytesUtils.fromString("80 A8 00 00");
+                out.write(pdolHeader);
+                // the length is tagSumLength + 2
+                out.write(tagSumLength + 2);
+                out.write(0x83);
+                out.write(tagSumLength);
+                for (int i = 0; i < tagSumLength; i++) {
+                    out.write(0);
+                }
+                // footer
+                out.write(0);
+                gpo = out.toByteArray();
+            }
+            content += "\n" + "\n" + "GPO: " + BytesUtils.bytesToString(gpo);
+
             //byte[] getProcessingOptionsCommand = BytesUtils.fromString("80 A8 00 00 0A 83 08 00 00 00 00 00 01 00 00 00");
-            byte[] getProcessingOptionsCommand = BytesUtils.fromString("80 A8 00 00 0A 83 08 00 00 00 00 00 00 00 00 00");
+            //byte[] getProcessingOptionsCommand = BytesUtils.fromString("80 A8 00 00 0A 83 08 00 00 00 00 00 00 00 00 00");
+
+            // use this fixed for visa
+            byte[] getProcessingOptionsCommand = BytesUtils.fromString("80A80000238321A0000000000000000001000000000000084000000000000840070203008017337000");
+            //byte[] getProcessingOptionsCommand = gpo.clone();
+
             content += "\n" + "getProcessingOptionsCommand: " + BytesUtils.bytesToString(getProcessingOptionsCommand);
             byte[] getProcessingOptionsResponse = isoDep.transceive(getProcessingOptionsCommand);
             content += "\n" + "getProcessingOptionsResponse: " + BytesUtils.bytesToString(getProcessingOptionsResponse);
             content += "\n" + "getProcessingOptionsResponseParsed:\n " + TlvUtil.prettyPrintAPDUResponse(getProcessingOptionsResponse);
             content += "\n" + "Application File Locator (AFL) is:\n" + "08 01 01 00 10 01 02 01 18 01 02 00 20 01 02 00";
-/*
+
+            /**
+             * 
+             *
+             * Visa  A00000000000000000010000000000000840000000000008400702030080173370
+             * 
+             * 9F 66 tagName: Terminal Transaction Qualifiers : tagValue: 4     A0 00 00 00 
+             * 9F 02 tagName: Amount, Authorised (Numeric) : tagValue: 6        00 00 00 00 00 01
+             * 9F 03 tagName: Amount, Other (Numeric) : tagValue: 6             00 00 00 00 00 00
+             * 9F 1A tagName: Terminal Country Code : tagValue: 2               08 40
+             * 95    tagName: Terminal Verification Results (TVR) : tagValue: 5 00 00 00 00 00
+             * 5F 2A tagName: Transaction Currency Code : tagValue: 2           08 40
+             * 9A    tagName: Transaction Date : tagValue: 3                    07 02 03
+             * 9C    tagName: Transaction Type : tagValue: 1                    00
+             * 9F 37 tagName: Unpredictable Number : tagValue: 4                80 17 33 70
+             *
+             */
+
+
+            /*
             content += "\n" + "\n" +" Step 04: check AFL for offline authorization";
             content += "\n" + "AFL 01: 08 01 01 00: 00 =>  no offline authorization";
             content += "\n" + "AFL 02: 10 01 02 01: 01 =>  offline authorization available";

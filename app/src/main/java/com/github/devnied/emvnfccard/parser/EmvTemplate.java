@@ -560,7 +560,7 @@ public class EmvTemplate {
         System.out.println("#*# parse selectResponseVisa: ");
         System.out.println("#*# parse gpo 1.st failed with response: 69 84, trying another PDOL");
         String pdolWithoutCountryCode = "80A8000023832180000000000000000000000000000000000000000000000000000000000000000000";
-        String pdolWithCountryCode = "80A80000238321A0000000000000000001000000000000084000000000000840070203008017337000";
+        String pdolWithCountryCode =    "80A80000238321A0000000000000000001000000000000084000000000000840070203008017337000";
         // byte[] pdolNew = BytesUtils.fromString(pdolWithoutCountryCode); // does not work
         byte[] pdolNew = BytesUtils.fromString(pdolWithCountryCode);
         System.out.println("#*# parse with pdolNew: " + BytesUtils.bytesToString(pdolNew));
