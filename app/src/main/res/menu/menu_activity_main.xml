@@ -6,6 +6,12 @@
     <!-- https://fonts.google.com/icons?selected=Material+Icons -->
 
     <item
+        android:id="@+id/action_set_session_key"
+        android:icon="@drawable/ic_outline_attach_email_24"
+        android:title="set session key"
+        app:showAsAction="never"/>
+
+    <item
         android:id="@+id/action_export_mail"
         android:icon="@drawable/ic_outline_attach_email_24"
         android:title="Export Mail"

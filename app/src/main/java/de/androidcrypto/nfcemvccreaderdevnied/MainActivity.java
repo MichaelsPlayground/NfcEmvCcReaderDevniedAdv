@@ -8,11 +8,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.security.crypto.EncryptedSharedPreferences;
+import androidx.security.crypto.MasterKeys;
 
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.nfc.NfcAdapter;
@@ -23,6 +26,7 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
+import android.security.keystore.KeyGenParameterSpec;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -40,6 +44,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,6 +52,10 @@ import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import fr.devnied.bitlib.BytesUtils;
 
 public class MainActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
+
+    // add in gradle.build (module)
+    // implementation "androidx.security:security-crypto:1.0.0"
+    // https://developer.android.com/topic/security/data
 
     TextView readResult;
     private NfcAdapter mNfcAdapter;
@@ -57,6 +66,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     Context contextSave;
 
     EmvCardAids emvCardAids = new EmvCardAids(); // for storage in file
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +80,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         readResult = findViewById(R.id.tvMainReadResult);
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+
+
     }
 
     // This method is run in another thread when a card is discovered
@@ -760,6 +773,16 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_activity_main, menu);
+
+        MenuItem mSetSessionKey = menu.findItem(R.id.action_set_session_key);
+        mSetSessionKey.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, SetSessionKeyActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
 
         MenuItem mExportMail = menu.findItem(R.id.action_export_mail);
         mExportMail.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
