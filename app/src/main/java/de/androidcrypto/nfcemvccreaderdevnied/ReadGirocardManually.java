@@ -117,8 +117,10 @@ public class ReadGirocardManually extends AppCompatActivity implements NfcAdapte
             //byte[] selectAidCommand = BytesUtils.fromString("00 A4 04 00 0A A0 00 00 03 59 10 10 02 80 01 00");
             //byte[] selectAidCommand = BytesUtils.fromString("00 A4 04 00 09 D2 76 00 00 25 47 41 01 00 00");
 
-            // this is for Visa
-            byte[] selectAidCommand = BytesUtils.fromString("00 A4 04 00 07 A0 00 00 00 03 10 10 00");
+            // this is for Visa VISA Debit/Credit (Classic)
+            //byte[] selectAidCommand = BytesUtils.fromString("00 A4 04 00 07 A0 00 00 00 03 10 10 00");
+            // visa dkb 2. aid Vpay
+            byte[] selectAidCommand = BytesUtils.fromString("00 A4 04 00 07 A0 00 00 00 03 20 20 00");
 
             content += "\n" + "selectAidCommand: " + BytesUtils.bytesToString(selectAidCommand);
             byte[] selectAidResponse = isoDep.transceive(selectAidCommand);
@@ -159,9 +161,10 @@ public class ReadGirocardManually extends AppCompatActivity implements NfcAdapte
              *                                      9A 03    -- Transaction Date
              *                                      9C 01    -- Transaction Type
              *                                      9F 37 04 -- Unpredictable Number
-             * AFL:
-             * 
-             * 
+             * DKB Visa 1:
+             * AFL: 94 04 -- Application File Locator (AFL): 10 05 05 00
+             * DKB Visa 2:
+             * AFL: 94 04 -- Application File Locator (AFL): 10 05 05 00
              */
             
             
