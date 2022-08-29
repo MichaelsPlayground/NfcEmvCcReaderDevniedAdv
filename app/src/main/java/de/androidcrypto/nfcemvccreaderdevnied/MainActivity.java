@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
+import de.androidcrypto.nfcemvccreaderdevnied.utils.EncryptionUtils;
 import fr.devnied.bitlib.BytesUtils;
 
 public class MainActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
@@ -81,7 +82,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 
-
+        // init the EncryptionUtils
+        EncryptionUtils.init(getApplicationContext());
     }
 
     // This method is run in another thread when a card is discovered
