@@ -53,4 +53,9 @@
         android:title="Verify PIN 2"
         app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/action_read_girocard_manually"
+        android:title="Read Girocard manually"
+        app:showAsAction="never"/>
+
 </menu>

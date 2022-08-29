@@ -844,6 +844,16 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             }
         });
 
+        MenuItem mReadGirocardManually = menu.findItem(R.id.action_read_girocard_manually);
+        mReadGirocardManually.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, ReadGirocardManually.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
         return super.onCreateOptionsMenu(menu);
     }
 }
