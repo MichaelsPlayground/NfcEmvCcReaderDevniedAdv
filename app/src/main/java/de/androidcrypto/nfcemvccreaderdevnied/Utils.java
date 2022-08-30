@@ -108,7 +108,7 @@ public class Utils {
     }
 
     // source: https://stackoverflow.com/q/58657740/8166854
-    private static char[] fromByteToCharArrayConverter(byte[] byteArray){
+    public static char[] fromByteToCharArrayConverter(byte[] byteArray){
         ByteBuffer buffer = ByteBuffer.wrap(byteArray);
         CharBuffer charBuffer = Charset.forName("UTF-8").decode(buffer);
         char[] charArray = new char[charBuffer.remaining()];
@@ -117,7 +117,7 @@ public class Utils {
     }
 
     // source: https://stackoverflow.com/q/58657740/8166854
-    private static byte[] fromCharToByteArray(char[] charArray){
+    public static byte[] fromCharToByteArray(char[] charArray){
         CharBuffer charBuffer = CharBuffer.wrap(charArray);
         ByteBuffer byteBuffer = Charset.forName("UTF-8").encode(charBuffer);
         byte[] byteArray = new byte[byteBuffer.remaining()];

@@ -52,8 +52,14 @@ public class SetSessionKeyActivity extends AppCompatActivity {
                 char[] passphraseChar = new char[passphraseLength];
                 passphrase.getText().getChars(0, passphraseLength, passphraseChar, 0);
                 SessionKey sessionKey;
+
+                // test conversions
+                byte[] passphraseByte = Utils.fromCharToByteArray(passphraseChar);
+                char[] passphraseChar2 = Utils.fromByteToCharArrayConverter(passphraseByte);
+
                 // generate the key in EncryptionUtils class and get the session key returned
-                sessionKey = EncryptionUtils.setSessionKey(passphraseChar, 10000);
+                //sessionKey = EncryptionUtils.setSessionKey(passphraseChar, 10000);
+                sessionKey = EncryptionUtils.setSessionKey(passphraseChar2, 10000);
                 if (sessionKey == null) {
                     String info = "something got wrong, the session key could not be set";
                     Toast toast = Toast.makeText(view.getContext(), Html.fromHtml("<font color='#eFD0600' ><b>" + info + "</b></font>"), Toast.LENGTH_LONG);
