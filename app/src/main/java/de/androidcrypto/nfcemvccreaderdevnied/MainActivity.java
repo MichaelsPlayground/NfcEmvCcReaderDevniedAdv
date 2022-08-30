@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
+import de.androidcrypto.nfcemvccreaderdevnied.model.SessionKey;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.EncryptionUtils;
 import fr.devnied.bitlib.BytesUtils;
 
@@ -68,7 +69,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
     EmvCardAids emvCardAids = new EmvCardAids(); // for storage in file
 
-
+    SessionKey sessionKey;
+    boolean isSessionKey = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +83,13 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         readResult = findViewById(R.id.tvMainReadResult);
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+
+        sessionKey = (SessionKey) getIntent().getSerializableExtra("sessionKey");
+        if (sessionKey != null) {
+            isSessionKey = true;
+            // todo remove the next line, it is for debug only !
+            readResult.setText(sessionKey.dumpData());
+        }
 
         // init the EncryptionUtils
         EncryptionUtils.init(getApplicationContext());
@@ -680,15 +689,23 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         }
     }
 
-    // section for storing the model file starts
-
-    // https://stackoverflow.com/questions/2139134/how-to-send-an-object-from-one-android-activity-to-another-using-intents
+    /**
+     * section for storing the model file starts
+     */
 
     private void exportModelFile() {
         if (emvCardAids == null) {
             writeToUiToast("Scan a tag first before writing files :-)");
             return;
         }
+        // todo check the key in EncryptionUtils
+        /*
+        if (!isSessionKey) {
+            writeToUiToast("set a session key before writing the content to a file :-)");
+            return;
+        }
+
+         */
         verifyPermissionsWriteModel();
     }
 
@@ -742,14 +759,23 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                         if (resultData != null) {
                             uri = resultData.getData();
                             // Perform operations on the document using its URI.
-                            try {
-                                writeModelToUri(uri, emvCardAids);
-                                writeToUiToast("file written to external shared storage: " + uri.toString());
-                            } catch (IOException e) {
+                            //try {
+                                // this is the cleartext storage
+                                //writeModelToUri(uri, emvCardAids);
+                                System.out.println("*** modelFileSaverActivityResultLauncher start writing");
+                                boolean saveSuccess;
+                                saveSuccess = EncryptionUtils.writeEncryptedModelToUri(uri, emvCardAids, contextSave);
+                                if (saveSuccess) {
+                                    writeToUiToast("file written to external shared storage: " + uri.toString());
+                                } else {
+                                    writeToUiToast("ERROR: saving of the encrypted model failed");
+                                }
+                            /*} catch (IOException e) {
                                 e.printStackTrace();
                                 writeToUiToast("ERROR: " + e.toString());
                                 return;
                             }
+                            */
                         }
                     }
                 }

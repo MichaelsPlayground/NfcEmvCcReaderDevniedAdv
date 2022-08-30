@@ -7,7 +7,6 @@
     android:orientation="vertical"
     tools:context=".SetSessionKeyActivity">
 
-
     <TextView
         android:id="@+id/tvInformation1"
         android:layout_width="match_parent"
@@ -31,7 +30,7 @@
         android:textStyle="bold" />
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/etPassphraseDecoration"
+        android:id="@+id/etSetPassphraseDecoration"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -52,7 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:maxLines="1"
-            android:text=""
+            android:text="123"
             android:visibility="visible"
             tools:ignore="KeyboardInaccessibleWidget" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -64,6 +63,6 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:text="set the seesion key" />
+        android:text="set the session key" />
 
 </LinearLayout>
