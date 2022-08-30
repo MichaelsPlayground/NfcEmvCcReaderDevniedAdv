@@ -2,7 +2,12 @@ package de.androidcrypto.nfcemvccreaderdevnied;
 
 import android.os.Build;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
@@ -71,15 +76,15 @@ public class Utils {
         return result + "";
     }
 
-    public static String printByteBinary(byte bytes){
+    public static String printByteBinary(byte bytes) {
         byte[] data = new byte[1];
         data[0] = bytes;
         return printByteArrayBinary(data);
     }
 
-    public static String printByteArrayBinary(byte[] bytes){
+    public static String printByteArrayBinary(byte[] bytes) {
         String output = "";
-        for (byte b1 : bytes){
+        for (byte b1 : bytes) {
             String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
             //s1 += " " + Integer.toHexString(b1);
             //s1 += " " + b1;
@@ -87,6 +92,37 @@ public class Utils {
             //System.out.println(s1);
         }
         return output;
+    }
+
+    // source: http://www.java2s.com/example/java-utility-method/char-array-to-byte-array-index-0.html
+    byte[] charArrayToByteArray(char[] chars) {
+        // Converts chars to bytes without using any external functions that might allocate additional
+        // buffers for the potentially sensitive data.
+        byte[] bytes = new byte[chars.length * 2];
+        for (int i = 0; i < chars.length; i++) {
+            char v = chars[i];
+            bytes[i * 2] = (byte) (0xff & (v >> 8));
+            bytes[i * 2 + 1] = (byte) (0xff & (v));
+        }
+        return bytes;
+    }
+
+    // source: https://stackoverflow.com/q/58657740/8166854
+    private static char[] fromByteToCharArrayConverter(byte[] byteArray){
+        ByteBuffer buffer = ByteBuffer.wrap(byteArray);
+        CharBuffer charBuffer = Charset.forName("UTF-8").decode(buffer);
+        char[] charArray = new char[charBuffer.remaining()];
+        charBuffer.get(charArray);
+        return charArray;
+    }
+
+    // source: https://stackoverflow.com/q/58657740/8166854
+    private static byte[] fromCharToByteArray(char[] charArray){
+        CharBuffer charBuffer = CharBuffer.wrap(charArray);
+        ByteBuffer byteBuffer = Charset.forName("UTF-8").encode(charBuffer);
+        byte[] byteArray = new byte[byteBuffer.remaining()];
+        byteBuffer.get(byteArray);
+        return byteArray;
     }
 
     public static String parseTextrecordPayload(byte[] ndefPayload) {
@@ -105,7 +141,7 @@ public class Utils {
      * per section 3.2.2 of the NFC Forum URI Record Type Definition document.
      */
     // source: https://github.com/skjolber/ndef-tools-for-android
-    private static final String[] URI_PREFIX_MAP = new String[] {
+    private static final String[] URI_PREFIX_MAP = new String[]{
             "", // 0x00
             "http://www.", // 0x01
             "https://www.", // 0x02
@@ -152,15 +188,14 @@ public class Utils {
     }
 
     private static final byte[] SW_9000 = {
-            (byte)0x90,  // SW1	Status byte 1 - Command processing status
-            (byte)0x00   // SW2	Status byte 2 - Command processing qualifier
+            (byte) 0x90,  // SW1	Status byte 1 - Command processing status
+            (byte) 0x00   // SW2	Status byte 2 - Command processing qualifier
     };
 
     /**
      * Method used to check if the last command return SW1SW2 == 9000
      *
-     * @param pByte
-     *            response to the last command
+     * @param pByte response to the last command
      * @return true if the status is 9000 false otherwise
      */
     public static boolean isSucceed(final byte[] pByte) {

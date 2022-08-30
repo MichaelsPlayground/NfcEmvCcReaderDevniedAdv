@@ -56,6 +56,7 @@ import de.androidcrypto.nfcemvccreaderdevnied.model.TagNameValue;
 import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.ApplicationInterchangeProfile;
 import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.CVMList;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.DateUtils;
+import de.androidcrypto.nfcemvccreaderdevnied.utils.EncryptionUtils;
 import fr.devnied.bitlib.BytesUtils;
 
 public class ImportModelFileActivity extends AppCompatActivity {
@@ -839,7 +840,13 @@ Cristian Radu
                             uri = resultData.getData();
                             // Perform operations on the document using its URI.
                             try {
-                                emvCardAids = readModelFromUri(uri);
+
+                                // this is the encrypted version
+                                emvCardAids = EncryptionUtils.readEncryptedModelFromUri(uri);
+
+                                // this is the unencrypted version
+                                // emvCardAids = readModelFromUri(uri);
+
                                 String message = "file loaded from external storage" + uri.toString();
                                 aids = emvCardAids.getAids();
                                 int aidsSize = aids.size();

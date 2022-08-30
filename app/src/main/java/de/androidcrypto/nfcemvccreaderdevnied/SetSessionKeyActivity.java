@@ -60,11 +60,11 @@ public class SetSessionKeyActivity extends AppCompatActivity {
                     toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
                     toast.show();
                 }
-                // return the sessionKey to the Main activity
-                Intent intent = new Intent(SetSessionKeyActivity.this, MainActivity.class);
-                intent.putExtra("sessionKey", sessionKey);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY); // no back to this activity
-                startActivity(intent);
+                // return the sessionKey to the Main activity not neccessary
+                //Intent intent = new Intent(SetSessionKeyActivity.this, MainActivity.class);
+                //intent.putExtra("sessionKey", sessionKey);
+                //intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY); // no back to this activity
+                //startActivity(intent);
                 finish();
             }
         });
