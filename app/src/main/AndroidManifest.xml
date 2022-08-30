@@ -19,6 +19,9 @@
         android:theme="@style/Theme.NfcEmvCcReaderDevnied"
         tools:targetApi="31">
         <activity
+            android:name=".DeleteSessionKeyActivity"
+            android:exported="false" />
+        <activity
             android:name=".SetSessionKeyActivity"
             android:exported="false" />
         <activity

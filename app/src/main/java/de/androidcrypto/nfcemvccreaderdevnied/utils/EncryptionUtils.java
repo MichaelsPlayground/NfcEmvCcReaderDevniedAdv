@@ -38,7 +38,7 @@ public class EncryptionUtils {
 
     @SuppressLint("StaticFieldLeak")
     private static Context context;
-
+    private static long EXPIRATION_IN_SECONDS = 20;
     private static String sessionKeyFilename = "sessionkey.dat";
 
     public static void init(Context context) {
@@ -72,7 +72,20 @@ public class EncryptionUtils {
         }
     }
 
-    private static boolean isSessionKeyExpired(SessionKey sessionKey, long seconds) {
+    public static boolean isSessionKeyAvailable() {
+        // checks that a session key is stored and not expired
+        SessionKey sessionKey = loadSessionKeyFromInternalStorage();
+        if (sessionKey == null) {
+            return false;
+        }
+        if (isSessionKeyExpired(sessionKey, EXPIRATION_IN_SECONDS)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public static boolean isSessionKeyExpired(SessionKey sessionKey, long seconds) {
         boolean result = true;
         Date dateNow = Calendar.getInstance().getTime();
         long durationInSeconds = (dateNow.getTime() - sessionKey.getDate().getTime()) / 1000;
@@ -84,12 +97,17 @@ public class EncryptionUtils {
 
     public static SessionKey loadSessionKey() {
         // todo implement this
-        return null;
+        return loadSessionKeyFromInternalStorage();
     }
 
     public static boolean deleteSessionKey() {
-        // todo implement this method
-        return true;
+        try {
+            context.deleteFile(sessionKeyFilename);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private static boolean writeSessionKeyToInternalStorage(SessionKey sessionKey) {
@@ -121,7 +139,7 @@ public class EncryptionUtils {
         }
     }
 
-    public static boolean writeEncryptedModelToUri(Uri uri, EmvCardAids emvCardAids, Context context)  {
+    public static boolean writeEncryptedModelToUri(Uri uri, EmvCardAids emvCardAids)  {
         SessionKey sessionKey;
         boolean isSessionKey = false;
         sessionKey = loadSessionKeyFromInternalStorage();

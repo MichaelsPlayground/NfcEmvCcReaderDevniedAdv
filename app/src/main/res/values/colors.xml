@@ -11,4 +11,5 @@
     <color name="colorStatusBar">#1E88E5</color>
     <color name="colorAccent">#8E24AA</color>
     <color name="red">#FD0600</color>
+    <color name="green">#00FF0B</color>
 </resources>

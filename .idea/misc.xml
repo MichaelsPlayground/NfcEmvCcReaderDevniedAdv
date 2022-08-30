@@ -9,12 +9,12 @@
         <entry key="app/src/main/res/layout/activity_analyze_model_file_v1.xml" value="0.1344984802431611" />
         <entry key="app/src/main/res/layout/activity_analyze_model_file_v2.xml" value="0.1344984802431611" />
         <entry key="app/src/main/res/layout/activity_analyze_model_file_v3.xml" value="0.1344984802431611" />
+        <entry key="app/src/main/res/layout/activity_delete_session_key.xml" value="0.254981884057971" />
         <entry key="app/src/main/res/layout/activity_import_model_file.xml" value="0.2798913043478261" />
         <entry key="app/src/main/res/layout/activity_import_model_file_2.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_import_model_file_v3.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/activity_read_girocard_manually.xml" value="0.15526849037487336" />
-        <entry key="app/src/main/res/layout/activity_set_session_key.xml" value="0.15526849037487336" />
+        <entry key="app/src/main/res/layout/activity_set_session_key.xml" value="0.254981884057971" />
         <entry key="app/src/main/res/layout/activity_verify_pin.xml" value="0.15307971014492755" />
         <entry key="app/src/main/res/layout/detail_afl.xml" value="0.1344984802431611" />
         <entry key="app/src/main/res/layout/detail_apdu_gpo.xml" value="0.1344984802431611" />

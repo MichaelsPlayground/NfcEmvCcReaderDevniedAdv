@@ -84,6 +84,9 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 
+        // init the EncryptionUtils
+        EncryptionUtils.init(getApplicationContext());
+
         sessionKey = (SessionKey) getIntent().getSerializableExtra("sessionKey");
         if (sessionKey != null) {
             isSessionKey = true;
@@ -91,8 +94,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             readResult.setText(sessionKey.dumpData());
         }
 
-        // init the EncryptionUtils
-        EncryptionUtils.init(getApplicationContext());
+
     }
 
     // This method is run in another thread when a card is discovered
@@ -588,11 +590,13 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             mNfcAdapter.disableReaderMode(this);
     }
 
-    // section for main menu
+    /**
+     * section for main menu
+     */
 
     private void exportDumpMail() {
         if (dumpExportString.isEmpty()) {
-            writeToUiToast("Scan a tag first before sending emails :-)");
+            writeToUiToast("Scan a card first before sending emails :-)");
             return;
         }
         String subject = "Dump NFC-Tag " + tagTypeString + " UID: " + tagIdString;
@@ -608,13 +612,16 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
     private void exportDumpFile() {
         if (dumpExportString.isEmpty()) {
-            writeToUiToast("Scan a tag first before writing files :-)");
+            writeToUiToast("Scan a card first before writing files :-)");
             return;
         }
         verifyPermissionsWriteString();
     }
 
-    // section external storage permission check
+    /**
+     * section external storage permission check
+     */
+
     private void verifyPermissionsWriteString() {
         String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE};
@@ -642,7 +649,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         String filename = tagTypeString + "_" + tagIdString + ".txt";
         // sanity check
         if (filename.equals("")) {
-            writeToUiToast("scan a tag before writing the content to a file :-)");
+            writeToUiToast("scan a card before writing the content to a file :-)");
             return;
         }
         intent.putExtra(Intent.EXTRA_TITLE, filename);
@@ -695,34 +702,43 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
     private void exportModelFile() {
         if (emvCardAids == null) {
-            writeToUiToast("Scan a tag first before writing files :-)");
+            writeToUiToast("Scan a card first before writing files :-)");
             return;
         }
-        // todo check the key in EncryptionUtils
-        /*
-        if (!isSessionKey) {
-            writeToUiToast("set a session key before writing the content to a file :-)");
-            return;
-        }
-
-         */
+        writeToUiToast("start exportModelFile");
         verifyPermissionsWriteModel();
     }
 
     // section external storage permission check
     private void verifyPermissionsWriteModel() {
+        writeToUiToast("start verifyPermissionsWriteModel");
         String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE};
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
                 permissions[0]) == PackageManager.PERMISSION_GRANTED
                 && ContextCompat.checkSelfPermission(this.getApplicationContext(),
                 permissions[1]) == PackageManager.PERMISSION_GRANTED) {
+            writeToUiToast("call writeModelToExternalSharedStorage");
             writeModelToExternalSharedStorage();
         } else {
             ActivityCompat.requestPermissions(this,
                     permissions,
                     REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
         }
+    }
+
+    private void verifyPermissionsWriteModelNew() {
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED){
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.READ_EXTERNAL_STORAGE)){
+                Toast.makeText(MainActivity.this, "Please Allow the Required Permissions", Toast.LENGTH_SHORT).show();
+            }
+            else{
+                ActivityCompat.requestPermissions(MainActivity.this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
+            }
+        }
+        else
+            writeModelToExternalSharedStorage();
     }
 
     private void writeModelToExternalSharedStorage() {
@@ -741,6 +757,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             writeToUiToast("scan a tag before writing the content to a file :-)");
             return;
         }
+        writeToUiToast("start intent modelFileSaverActivityResultLauncher");
         intent.putExtra(Intent.EXTRA_TITLE, filename);
         modelFileSaverActivityResultLauncher.launch(intent);
     }
@@ -750,6 +767,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             new ActivityResultCallback<ActivityResult>() {
                 @Override
                 public void onActivityResult(ActivityResult result) {
+                    writeToUiToast("start modelFileSaverActivityResultLauncher");
                     if (result.getResultCode() == Activity.RESULT_OK) {
                         // There are no request codes
                         Intent resultData = result.getData();
@@ -758,25 +776,32 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                         Uri uri = null;
                         if (resultData != null) {
                             uri = resultData.getData();
+                            writeToUiToast("uri: " + uri.toString());
                             // Perform operations on the document using its URI.
-                            //try {
+
                                 // this is the cleartext storage
-                                //writeModelToUri(uri, emvCardAids);
-                                System.out.println("*** modelFileSaverActivityResultLauncher start writing");
-                                boolean saveSuccess;
-                                saveSuccess = EncryptionUtils.writeEncryptedModelToUri(uri, emvCardAids, contextSave);
+                            //try {
+                            //    writeModelToUri(uri, emvCardAids);
+                            //System.out.println("*** modelFileSaverActivityResultLauncher start writing");
+
+                            boolean saveSuccess;
+                                saveSuccess = EncryptionUtils.writeEncryptedModelToUri(uri, emvCardAids);
                                 if (saveSuccess) {
                                     writeToUiToast("file written to external shared storage: " + uri.toString());
                                 } else {
                                     writeToUiToast("ERROR: saving of the encrypted model failed");
                                 }
-                            /*} catch (IOException e) {
-                                e.printStackTrace();
-                                writeToUiToast("ERROR: " + e.toString());
-                                return;
-                            }
-                            */
+                            //} catch (IOException e) {
+                            //    e.printStackTrace();
+                            //    writeToUiToast("ERROR: " + e.toString());
+                            //    return;
+                            //}
+
+                        } else {
+                            writeToUiToast("resultData IS NULL");
                         }
+                    } else {
+                        writeToUiToast("resultCode NOT OK in modelFileSaverActivityResultLauncher");
                     }
                 }
             });
@@ -812,6 +837,16 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             }
         });
 
+        MenuItem mDeleteSessionKey = menu.findItem(R.id.action_delete_session_key);
+        mDeleteSessionKey.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, DeleteSessionKeyActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
         MenuItem mExportMail = menu.findItem(R.id.action_export_mail);
         mExportMail.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -838,8 +873,11 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         mExportModelFile.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
-                //startActivity(i);
+                // check that the Session Key is saved and not expired
+                if (!EncryptionUtils.isSessionKeyAvailable()) {
+                    writeToUiToast("set the Session Key before exporting the model");
+                    return false;
+                }
                 exportModelFile();
                 return false;
             }
