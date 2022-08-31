@@ -7,38 +7,24 @@ import java.util.Date;
 
 public class SessionKey implements Serializable {
 
-    private char[] passphrase;
+    private byte[] passphraseByte;
     private byte[] passphraseNonce;
-    private byte[] key;
-    private byte[] salt;
-    private byte[] nonce;
     int iterations;
     private Date date;
 
-    public SessionKey(char[] passphrase, byte[] passphraseNonce, byte[] key, byte[] salt, byte[] nonce, int iterations) {
-        this.passphrase = passphrase;
+    public SessionKey(byte[] passphraseByte, byte[] passphraseNonce, int iterations) {
+        this.passphraseByte = passphraseByte;
         this.passphraseNonce = passphraseNonce;
-        this.key = key;
-        this.salt = salt;
-        this.nonce = nonce;
         this.iterations = iterations;
         this.date = Calendar.getInstance().getTime();
     }
 
-    public char[] getPassphrase() {
-        return passphrase;
+    public byte[] getPassphraseByte() {
+        return passphraseByte;
     }
 
-    public byte[] getKey() {
-        return key;
-    }
-
-    public byte[] getSalt() {
-        return salt;
-    }
-
-    public byte[] getNonce() {
-        return nonce;
+    public byte[] getPassphraseNonce() {
+        return passphraseNonce;
     }
 
     public int getIterations() {
@@ -51,10 +37,8 @@ public class SessionKey implements Serializable {
 
     public String dumpData() {
         String output = "SessionKeyClass" +
-                "\npassphrase: " + Arrays.toString(passphrase) +
-                "\nkey: " + Arrays.toString(key) +
-                "\nsalt: " + Arrays.toString(salt) +
-                "\nnonce: " + Arrays.toString(nonce) +
+                "\npassphraseByte: " + Arrays.toString(passphraseByte) +
+                "\npassphraseNonce: " + Arrays.toString(passphraseNonce) +
                 "\niterations: " + iterations +
                 "\ncreation date: " + date.toString();
         return output;

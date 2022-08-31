@@ -56,7 +56,7 @@ public class DeleteSessionKeyActivity extends AppCompatActivity {
                 if (sessionKey != null) {
                     String sessionKeyDump = sessionKey.dumpData();
                     String expirationCheck;
-                    if (EncryptionUtils.isSessionKeyExpired(sessionKey, 20)) {
+                    if (EncryptionUtils.isSessionKeyExpired(sessionKey, 300)) {
                         expirationCheck = "Session Key is expired";
                     } else {
                         expirationCheck = "Session Key is NOT expired";

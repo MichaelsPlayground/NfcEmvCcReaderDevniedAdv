@@ -1,10 +1,5 @@
 package de.androidcrypto.nfcemvccreaderdevnied;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.Intent;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.Gravity;
@@ -12,6 +7,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -32,6 +29,11 @@ public class SetSessionKeyActivity extends AppCompatActivity {
         passphrase = findViewById(R.id.etSetPassphrase);
         passphraseLayout = findViewById(R.id.etSetPassphraseDecoration);
         setSessionKey = findViewById(R.id.btnSetPassphrase);
+
+        /**
+         * note: the duration of session key is fixed here in the view, it needs to
+         * correspond to EXPIRATION_IN_SECONDS in EncryptionUtils
+         */
 
         setSessionKey.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -57,8 +59,6 @@ public class SetSessionKeyActivity extends AppCompatActivity {
                 byte[] passphraseByte = Utils.fromCharToByteArray(passphraseChar);
                 char[] passphraseChar2 = Utils.fromByteToCharArrayConverter(passphraseByte);
 
-                // generate the key in EncryptionUtils class and get the session key returned
-                //sessionKey = EncryptionUtils.setSessionKey(passphraseChar, 10000);
                 sessionKey = EncryptionUtils.setSessionKey(passphraseChar2, 10000);
                 if (sessionKey == null) {
                     String info = "something got wrong, the session key could not be set";
@@ -66,11 +66,6 @@ public class SetSessionKeyActivity extends AppCompatActivity {
                     toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
                     toast.show();
                 }
-                // return the sessionKey to the Main activity not neccessary
-                //Intent intent = new Intent(SetSessionKeyActivity.this, MainActivity.class);
-                //intent.putExtra("sessionKey", sessionKey);
-                //intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY); // no back to this activity
-                //startActivity(intent);
                 finish();
             }
         });
