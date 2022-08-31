@@ -17,11 +17,14 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
+import android.text.Html;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.devnied.emvnfccard.enums.SwEnum;
 import com.github.devnied.emvnfccard.enums.TagValueTypeEnum;
@@ -33,6 +36,7 @@ import com.github.devnied.emvnfccard.model.EmvTrack2;
 import com.github.devnied.emvnfccard.model.Service;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 import com.github.devnied.emvnfccard.utils.TrackUtils;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import net.sf.scuba.tlv.TLVInputStream;
@@ -62,6 +66,7 @@ import fr.devnied.bitlib.BytesUtils;
 public class ImportModelFileActivity extends AppCompatActivity {
 
     Context contextSave;
+    View contentView;
     TextView readResult;
     SwitchMaterial showTagDetailData;
     SwitchMaterial showTagDetailDeepData;
@@ -88,6 +93,7 @@ public class ImportModelFileActivity extends AppCompatActivity {
         btnImport.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                contentView = view;
                 verifyPermissionsReadModel();
             }
         });
@@ -840,10 +846,16 @@ Cristian Radu
                             uri = resultData.getData();
                             // Perform operations on the document using its URI.
                             try {
-
                                 // this is the encrypted version
                                 emvCardAids = EncryptionUtils.readEncryptedModelFromUri(uri);
-
+                                if (emvCardAids == null) {
+                                    String info = "ERROR - is it a stored model file and correct session key ?";
+                                    //Toast toast = Toast.makeText(contextSave, Html.fromHtml("<font color='#eFD0600' ><b>" + info + "</b></font>"), Toast.LENGTH_LONG);
+                                    //toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+                                    //toast.show();
+                                    showRedSnackBar(info);
+                                    return;
+                                }
                                 // this is the unencrypted version
                                 // emvCardAids = readModelFromUri(uri);
 
@@ -881,6 +893,26 @@ Cristian Radu
             e.printStackTrace();
         }
         return emvCardAidsImport;
+    }
+
+    private void showRedSnackBar(String message) {
+        // show snackbar permanently until click to OK
+        showSnackBar(message, R.color.red);
+    }
+
+    private void showSnackBar(String text, int color) {
+        Snackbar snackbar = Snackbar
+                .make(contentView, text, Snackbar.LENGTH_INDEFINITE)
+                .setTextColor(getResources().getColor(R.color.black))
+                .setActionTextColor(getResources().getColor(R.color.black))
+                .setBackgroundTint(ContextCompat.getColor(ImportModelFileActivity.this, color))
+                .setAction("OK", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        // just click to OK
+                    }
+                });
+        snackbar.show();
     }
 
     // todo use another menu - no export / import of a model file but export / import tagList file

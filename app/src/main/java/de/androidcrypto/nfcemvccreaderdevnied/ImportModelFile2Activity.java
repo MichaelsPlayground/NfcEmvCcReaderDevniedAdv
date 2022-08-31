@@ -34,6 +34,7 @@ import com.github.devnied.emvnfccard.model.EmvTrack2;
 import com.github.devnied.emvnfccard.model.Service;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
 import com.github.devnied.emvnfccard.utils.TrackUtils;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import net.sf.scuba.tlv.TLVInputStream;
@@ -60,11 +61,13 @@ import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.ApplicationInterchangePr
 import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.CVMList;
 import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.ShortFileIdentifier;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.DateUtils;
+import de.androidcrypto.nfcemvccreaderdevnied.utils.EncryptionUtils;
 import fr.devnied.bitlib.BytesUtils;
 
 public class ImportModelFile2Activity extends AppCompatActivity {
 
     Context contextSave;
+    View contentView;
     TextView readResult;
 
     SwitchMaterial showCommandData;
@@ -108,6 +111,7 @@ public class ImportModelFile2Activity extends AppCompatActivity {
         btnImport.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                contentView = view;
                 verifyPermissionsReadModel();
             }
         });
@@ -927,6 +931,26 @@ Cristian Radu
         return status;
     }
 
+    private void showRedSnackBar(String message) {
+        // show snackbar permanently until click to OK
+        showSnackBar(message, R.color.red);
+    }
+
+    private void showSnackBar(String text, int color) {
+        Snackbar snackbar = Snackbar
+                .make(contentView, text, Snackbar.LENGTH_INDEFINITE)
+                .setTextColor(getResources().getColor(R.color.black))
+                .setActionTextColor(getResources().getColor(R.color.black))
+                .setBackgroundTint(ContextCompat.getColor(ImportModelFile2Activity.this, color))
+                .setAction("OK", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        // just click to OK
+                    }
+                });
+        snackbar.show();
+    }
+
     /**
      * section for menu
      */
@@ -972,7 +996,18 @@ Cristian Radu
                             uri = resultData.getData();
                             // Perform operations on the document using its URI.
                             try {
-                                emvCardAids = readModelFromUri(uri);
+                                // this is the encrypted version
+                                emvCardAids = EncryptionUtils.readEncryptedModelFromUri(uri);
+                                if (emvCardAids == null) {
+                                    String info = "ERROR - is it a stored model file and correct session key ?";
+                                    //Toast toast = Toast.makeText(contextSave, Html.fromHtml("<font color='#eFD0600' ><b>" + info + "</b></font>"), Toast.LENGTH_LONG);
+                                    //toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+                                    //toast.show();
+                                    showRedSnackBar(info);
+                                    return;
+                                }
+                                // this is the unencrypted version
+                                // emvCardAids = readModelFromUri(uri);
                                 String message = "file loaded from external storage" + uri.toString();
                                 aids = emvCardAids.getAids();
                                 int aidsSize = aids.size();
