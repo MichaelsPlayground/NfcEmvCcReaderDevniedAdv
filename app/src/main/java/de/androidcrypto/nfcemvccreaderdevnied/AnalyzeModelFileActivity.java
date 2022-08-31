@@ -961,8 +961,8 @@ Cristian Radu
     private void showSnackBar(String text, int color) {
         Snackbar snackbar = Snackbar
                 .make(contentView, text, Snackbar.LENGTH_INDEFINITE)
-                .setTextColor(getResources().getColor(R.color.black))
-                .setActionTextColor(getResources().getColor(R.color.black))
+                .setTextColor(ContextCompat.getColor(contextSave, R.color.black))
+                .setActionTextColor(ContextCompat.getColor(contextSave, R.color.black))
                 .setBackgroundTint(ContextCompat.getColor(AnalyzeModelFileActivity.this, color))
                 .setAction("OK", new View.OnClickListener() {
                     @Override

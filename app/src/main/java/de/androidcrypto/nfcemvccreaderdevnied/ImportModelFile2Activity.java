@@ -601,12 +601,6 @@ public class ImportModelFile2Activity extends AppCompatActivity {
             content = content + "\n" + "no Track2 equivalent data available";
         }
 
-
-
-
-
-
-
         content = content + "\n" + "------------------------\n";
 
         content = content + "\n" + "------------------------\n";
@@ -793,7 +787,7 @@ Cristian Radu
 
 
     // This code will have exactly the given amount of characters; filled with spaces or truncated
-    // on the right side
+    // on the left side
     // source: https://stackoverflow.com/a/38110257/8166854
     private static String leftpad(String text, int length) {
         return String.format("%" + length + "." + length + "s", text);
@@ -902,7 +896,7 @@ Cristian Radu
         boolean status = false;
         List<TLV> listTlv = TlvUtil.getlistTLV(data, EmvTags.PAN_SEQUENCE_NUMBER);
         if (listTlv.size() != 0) {
-            TLV tag = listTlv.get(0); // only one pan per AID
+            TLV tag = listTlv.get(0); // only one pan sequence number per AID
             emvCardDetail.setPanSequenceNumber(tag.getValueBytes());
             status = true;
         }
@@ -939,8 +933,8 @@ Cristian Radu
     private void showSnackBar(String text, int color) {
         Snackbar snackbar = Snackbar
                 .make(contentView, text, Snackbar.LENGTH_INDEFINITE)
-                .setTextColor(getResources().getColor(R.color.black))
-                .setActionTextColor(getResources().getColor(R.color.black))
+                .setTextColor(ContextCompat.getColor(contextSave, R.color.black))
+                .setActionTextColor(ContextCompat.getColor(contextSave, R.color.black))
                 .setBackgroundTint(ContextCompat.getColor(ImportModelFile2Activity.this, color))
                 .setAction("OK", new View.OnClickListener() {
                     @Override

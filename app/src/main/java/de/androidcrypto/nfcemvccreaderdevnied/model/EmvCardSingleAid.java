@@ -441,6 +441,10 @@ public class EmvCardSingleAid implements Serializable {
         this.cardLogFormatResponse = cardLogFormatResponse;
     }
 
+    public void setParsingCompleted(boolean parsingCompleted) {
+        isParsingCompleted = parsingCompleted;
+    }
+
     public byte[] getAtr() {
         return atr;
     }

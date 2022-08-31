@@ -97,8 +97,8 @@ public class EncryptionUtils {
         return result;
     }
 
+    // this method decrypts the session key
     public static SessionKey loadSessionKey() {
-        // todo implement this
         SessionKey encryptedSessionKey;
         encryptedSessionKey = loadSessionKeyFromInternalStorage();
         if (encryptedSessionKey != null) {

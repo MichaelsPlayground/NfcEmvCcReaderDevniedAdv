@@ -282,6 +282,11 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                 //parser.readLogEntry();
 
+                // todo MainActivity use parseAndPrintApduRespond(byte[] apduResponse, List<TagNameValue> tagList)
+                // todo append EmvCardSingleAid with List<TagNameValue> tagList
+                // todo append EmvCardSingleAid with List<TagNameValue> tagListNew = manually analyzed
+                // todo append fields for single EmvTags: PAN, PAN sequence nr, expires, label
+
 
                 // store the emvCardSingleAid in the "all" model
                 emvCardSingleAid.setIsParsingCompleted(true);
