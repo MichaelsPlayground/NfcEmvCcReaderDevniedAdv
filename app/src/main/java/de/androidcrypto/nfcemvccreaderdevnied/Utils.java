@@ -2,8 +2,6 @@ package de.androidcrypto.nfcemvccreaderdevnied;
 
 import android.os.Build;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;

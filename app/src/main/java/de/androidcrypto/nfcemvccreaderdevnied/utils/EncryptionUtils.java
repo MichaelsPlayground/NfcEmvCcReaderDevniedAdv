@@ -15,7 +15,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -35,7 +34,6 @@ import javax.crypto.spec.SecretKeySpec;
 import de.androidcrypto.nfcemvccreaderdevnied.Utils;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.SessionKey;
-import fr.devnied.bitlib.BytesUtils;
 
 public class EncryptionUtils {
 
