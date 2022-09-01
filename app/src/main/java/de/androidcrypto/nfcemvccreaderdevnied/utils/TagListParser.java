@@ -3,9 +3,13 @@ package de.androidcrypto.nfcemvccreaderdevnied.utils;
 import com.github.devnied.emvnfccard.enums.SwEnum;
 import com.github.devnied.emvnfccard.enums.TagValueTypeEnum;
 import com.github.devnied.emvnfccard.exception.TlvException;
+import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
 import com.github.devnied.emvnfccard.iso7816emv.ITag;
 import com.github.devnied.emvnfccard.iso7816emv.TLV;
+import com.github.devnied.emvnfccard.model.EmvTrack2;
+import com.github.devnied.emvnfccard.model.Service;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
+import com.github.devnied.emvnfccard.utils.TrackUtils;
 
 import net.sf.scuba.tlv.TLVInputStream;
 
@@ -13,7 +17,9 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import de.androidcrypto.nfcemvccreaderdevnied.model.TagNameValue;
@@ -28,20 +34,20 @@ import fr.devnied.bitlib.BytesUtils;
 
 public class TagListParser {
 
-    private static List<TagNameValue> tagListResponse = new ArrayList<TagNameValue>();
-    private static String tagListResponseDump = "";
+    private static List<TagNameValue> tagListData = new ArrayList<TagNameValue>();
+    private static String tagListDump = "";
 
-    public static String getTagListResponseDump() {
-        return tagListResponseDump;
+    public static String getTagListDump() {
+        return tagListDump;
     }
 
     public static List<TagNameValue> parseRespond (byte[] respond) {
-        tagListResponse = new ArrayList<TagNameValue>();
-        tagListResponseDump = "";
+        tagListData = new ArrayList<TagNameValue>();
+        tagListDump = "";
 
-        tagListResponseDump = parseAndPrintApduRespond(respond, tagListResponse);
+        tagListDump = parseAndPrintApduRespond(respond, tagListData);
 
-        return tagListResponse;
+        return tagListData;
     }
 
     private static String parseAndPrintApduRespond(byte[] apduResponse, List<TagNameValue> tagList) {
@@ -170,13 +176,13 @@ public class TagListParser {
     public static String printTableTags(List<TagNameValue> tagList) {
         StringBuilder buf = new StringBuilder();
         buf.append("Tag   Name                            Value\n");
-        buf.append("--------------------------------------------------------------\n");
+        buf.append("--------------------------------------------------------------------\n");
         int tagListSize = tagList.size();
         for (int i = 0; i < tagListSize; i++) {
             TagNameValue tag = tagList.get(i);
             buf.append(rightpad(BytesUtils.bytesToString(tag.getTagBytes()), 5));
             buf.append(" ");
-            buf.append(rightpad(tag.getTagName(), 31));
+            buf.append(rightpad(tag.getTagName(), 36));
             buf.append(" ");
             buf.append(rightpad(BytesUtils.bytesToStringNoSpace(tag.getTagValueBytes(), false), 25));
             buf.append("\n");
@@ -195,4 +201,111 @@ public class TagListParser {
         return String.format("%-" + length + "." + length + "s", text);
     }
 
+    /**
+     * this method finds the TNV in TNV-List by the tag bytes
+     */
+
+    // find a tag in the tag list
+    public static TagNameValue findTnv(byte[] tagBytes, List<TagNameValue> tnvs) {
+        for (TagNameValue tnv : tnvs) {
+            if (tnv.getTagBytes().equals(tagBytes)) {
+                return tnv;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * This function builds a new tag for TNV
+     * @param tagBytes
+     * @param tagName
+     * @param tvtEnum
+     * @param tagValueBytes
+     * @return
+     */
+
+    public static TagNameValue tagBuild(byte[] tagBytes, String tagName, TagValueTypeEnum tvtEnum, byte[] tagValueBytes) {
+        TagNameValue tnv = new TagNameValue();
+        tnv.setTagBytes(tagBytes);
+        tnv.setTagName(tagName);
+        tnv.setTagValueType(tvtEnum.toString());
+        tnv.setTagValueBytes(tagValueBytes);
+        return tnv;
+    }
+
+    /**
+     * This function builds a new tag for TNV if the data is boolean
+     * The value will be 0x00 for FALSE and 0x01 for TRUE
+     * @param tagBytes
+     * @param tagName
+     * @param tvtEnum
+     * @param valueBoolean
+     * @return
+     */
+
+    public static TagNameValue tagBuildBoolean(byte[] tagBytes, String tagName, TagValueTypeEnum tvtEnum, boolean valueBoolean) {
+        TagNameValue tnv = new TagNameValue();
+        tnv.setTagBytes(tagBytes);
+        tnv.setTagName(tagName);
+        tnv.setTagValueType(tvtEnum.toString());
+        if (valueBoolean) {
+            tnv.setTagValueBytes(new byte[]{(byte) 0x01}); // true = 1
+        } else {
+            tnv.setTagValueBytes(new byte[]{(byte) 0x00}); // false = 0
+        }
+        return tnv;
+    }
+
+    public static List<TagNameValue> getTrack2EquivalentData(List<TagNameValue> tlvList, byte[] tagBytes) {
+        List<TagNameValue> tagListNew = new ArrayList<>();
+        TagNameValue emvTrack2EquivalentData = TagListParser.findTnv(tagBytes, tlvList);
+        if (emvTrack2EquivalentData != null) {
+            byte[] t2edByte = emvTrack2EquivalentData.getTagValueBytes();
+            EmvTrack2 emvTrack2 = TrackUtils.extractTrack2EquivalentData(t2edByte);
+            String cardNumber = emvTrack2.getCardNumber();
+            Date expireDate = emvTrack2.getExpireDate();
+            String expireDateString = DateUtils.getFormattedDateYyyy_Mm(expireDate);
+
+            Service service = emvTrack2.getService();
+            String service1Interchange = service.getServiceCode1().getInterchange();
+            String service1Technology = service.getServiceCode1().getTechnology();
+            String service2AuthorizationProcessing = service.getServiceCode2().getAuthorizationProcessing();
+            String service3GetAllowedServices = service.getServiceCode3().getAllowedServices();
+            String service3PinRequirements = service.getServiceCode3().getPinRequirements();
+
+            // build new tags
+            TagNameValue tnvNew = new TagNameValue();
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x21}, "Track2 list raw data", TagValueTypeEnum.BINARY, t2edByte);
+            tagListNew.add(tnvNew);
+            // for credit cards the pan is allways even (8 bytes = 16 digits)
+            // some other cards like German's girocard may get a checknumber at the end so the card number string is odd
+            if (cardNumber.length() % 2 != 0) {
+                cardNumber = cardNumber + "0"; // for odd card numbers
+            }
+            // some tag are doubled to show them under the known tag and the new tag
+            tnvNew = tagBuild(new byte[]{(byte) 0x5a}, "Track2 PAN", TagValueTypeEnum.BINARY, BytesUtils.fromString(cardNumber));
+            tagListNew.add(tnvNew);
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x22}, "Track2 PAN", TagValueTypeEnum.BINARY, BytesUtils.fromString(cardNumber));
+            tagListNew.add(tnvNew);
+
+            tnvNew = tagBuild(new byte[]{(byte) 0x5f, 0x24}, "Track2 ExpireDate", TagValueTypeEnum.TEXT, expireDateString.getBytes(StandardCharsets.UTF_8));
+            tagListNew.add(tnvNew);
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x23}, "Track2 ExpireDate", TagValueTypeEnum.TEXT, expireDateString.getBytes(StandardCharsets.UTF_8));
+            tagListNew.add(tnvNew);
+
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x24}, "Track2 Service1 Interchange", TagValueTypeEnum.TEXT, service1Interchange.getBytes(StandardCharsets.UTF_8));
+            tagListNew.add(tnvNew);
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x25}, "Track2 Service1 Technology", TagValueTypeEnum.TEXT, service1Technology.getBytes(StandardCharsets.UTF_8));
+            tagListNew.add(tnvNew);
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x26}, "Track2 Service2 AuthorizationProcessing", TagValueTypeEnum.TEXT, service2AuthorizationProcessing.getBytes(StandardCharsets.UTF_8));
+            tagListNew.add(tnvNew);
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x27}, "Track2 Service3 GetAllowedServices", TagValueTypeEnum.TEXT, service3GetAllowedServices.getBytes(StandardCharsets.UTF_8));
+            tagListNew.add(tnvNew);
+            tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x28}, "Track2 Service3 PinRequirements", TagValueTypeEnum.TEXT, service3PinRequirements.getBytes(StandardCharsets.UTF_8));
+            tagListNew.add(tnvNew);
+            return tagListNew;
+        } else {
+            return null;
+        }
+    }
 }

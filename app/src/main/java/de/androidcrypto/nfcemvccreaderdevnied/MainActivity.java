@@ -32,20 +32,28 @@ import de.androidcrypto.nfcemvccreaderdevnied.model.Afl;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAids;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardAnalyze;
 
+import com.github.devnied.emvnfccard.enums.TagValueTypeEnum;
+import com.github.devnied.emvnfccard.iso7816emv.EmvTags;
+import com.github.devnied.emvnfccard.model.EmvTrack2;
+import com.github.devnied.emvnfccard.model.Service;
 import com.github.devnied.emvnfccard.parser.EmvTemplate;
 import com.github.devnied.emvnfccard.utils.ResponseUtils;
 import com.github.devnied.emvnfccard.utils.TlvUtil;
+import com.github.devnied.emvnfccard.utils.TrackUtils;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import de.androidcrypto.nfcemvccreaderdevnied.model.SessionKey;
 import de.androidcrypto.nfcemvccreaderdevnied.model.TagNameValue;
+import de.androidcrypto.nfcemvccreaderdevnied.utils.DateUtils;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.EncryptionUtils;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.TagListParser;
 import fr.devnied.bitlib.BytesUtils;
@@ -291,10 +299,13 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                 idContentString = idContentString + "\n" + "-------------------";
                 idContentString = idContentString + "\n" + "TagListParser";
+                List<TagNameValue> allTlvList = new ArrayList<TagNameValue>();
                 // analyze the SelectPpseRespond
                 idContentString = idContentString + "\n" + "SelectPpseRespond";
                 byte[] selectPpseResponseTlv = emvCardSingleAid.getApduSelectPpseResponse();
                 List<TagNameValue> selectPpseResponseTlvList = TagListParser.parseRespond(selectPpseResponseTlv);
+                allTlvList.addAll(selectPpseResponseTlvList);
+                emvCardSingleAid.setSelectPpseResponseTlvList(selectPpseResponseTlvList);
                 //String selectPpseResponseTlvDump = TagListParser.getTagListResponseDump();
                 //idContentString = idContentString + "\n" + "selectPpseResponseTlvDump:\n" + selectPpseResponseTlvDump;
                 String selectPpseResponseTagListDump = TagListParser.printTableTagsText(selectPpseResponseTlvList);
@@ -304,6 +315,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 idContentString = idContentString + "\n" + "SelectPidRespond";
                 byte[] selectPidResponseTlv = emvCardSingleAid.getApduSelectPidResponse();
                 List<TagNameValue> selectPidResponseTlvList = TagListParser.parseRespond(selectPidResponseTlv);
+                allTlvList.addAll(selectPidResponseTlvList);
+                emvCardSingleAid.setSelectPidResponseTlvList(selectPidResponseTlvList);
                 String selectPidResponseTagListDump = TagListParser.printTableTagsText(selectPidResponseTlvList);
                 idContentString = idContentString + "\n" + "selectPidResponseTlvDump:\n" + selectPidResponseTagListDump;
 
@@ -311,6 +324,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 if (emvCardSingleAid.isGetProcessingOptionsSucceed()) {
                     byte[] getProcessingOptionsResponseTlv = emvCardSingleAid.getApduGetProcessingOptionsResponse();
                     List<TagNameValue> getProcessingOptionsResponseTlvList = TagListParser.parseRespond(getProcessingOptionsResponseTlv);
+                    allTlvList.addAll(getProcessingOptionsResponseTlvList);
+                    emvCardSingleAid.setGetProcessingOptionsResponseTlvList(getProcessingOptionsResponseTlvList);
                     String getProcessingOptionsResponseTagListDump = TagListParser.printTableTagsText(getProcessingOptionsResponseTlvList);
                     idContentString = idContentString + "\n" + "getProcessingOptionsResponseTlvDump:\n" + getProcessingOptionsResponseTagListDump;
                 }
@@ -319,6 +334,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 if (emvCardSingleAid.isGetProcessingOptionsVisaSucceed()) {
                     byte[] getProcessingOptionsVisaResponseTlv = emvCardSingleAid.getApduGetProcessingOptionsVisaResponse();
                     List<TagNameValue> getProcessingOptionsVisaResponseTlvList = TagListParser.parseRespond(getProcessingOptionsVisaResponseTlv);
+                    allTlvList.addAll(getProcessingOptionsVisaResponseTlvList);
+                    emvCardSingleAid.setGetProcessingOptionsVisaResponseTlvList(getProcessingOptionsVisaResponseTlvList);
                     String getProcessingOptionsVisaResponseTagListDump = TagListParser.printTableTagsText(getProcessingOptionsVisaResponseTlvList);
                     idContentString = idContentString + "\n" + "getProcessingOptionsVisaResponseTlvDump:\n" + getProcessingOptionsVisaResponseTagListDump;
                 }
@@ -334,13 +351,43 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                         readRecordTlvList = TagListParser.parseRespond(readRecordResponse);
                         readRecordsResponseTlvList.addAll(readRecordTlvList);
                     }
+                    allTlvList.addAll(readRecordsResponseTlvList);
+                    emvCardSingleAid.setReadRecordsTlvList(readRecordsResponseTlvList);
                     String readRecordsResponseTagListDump = TagListParser.printTableTagsText(readRecordsResponseTlvList);
                     idContentString = idContentString + "\n" + "readRecordsResponseTlvDump:\n" + readRecordsResponseTagListDump;
                 }
 
-                // todo store in model
-                // todo generate an "all" list and store in model
-                // todo generate the new tag list with analized data elements
+
+                TagNameValue tnvPan = TagListParser.findTnv(EmvTags.PAN.getTagBytes(), allTlvList);
+                if (tnvPan != null) {
+                    String emvPan = BytesUtils.bytesToStringNoSpace(tnvPan.getTagValueBytes());
+                    idContentString = idContentString + "\n" + "PAN: " + emvPan;
+                }
+                // todo get single data like ATC, LeftPinTry etc
+                // todo generate the new tag list with analyzed data elements
+
+                emvCardSingleAid.setAllTlvList(allTlvList);
+
+                // in this list we store data that got extracted from card data like Track 2 equivalent tag
+                // if the data has a known tag (e.g. PAN is tag 5A) then the data will get the same tag in the newTlvList
+                // if we analyze data like Application Interchange Profile (AIP) they will get new tags completely
+                // out of range the known tags like FF 01...
+                List<TagNameValue> newTlvList = new ArrayList<TagNameValue>();
+
+                // aip
+
+                // cardholder verification method (CVM)
+
+                // track 1
+
+                // Track 2 equivalent data in the list ?
+                List<TagNameValue> emvTrack2EquivalentData = TagListParser.getTrack2EquivalentData(allTlvList, EmvTags.TRACK_2_EQV_DATA.getTagBytes());
+                if (emvTrack2EquivalentData != null) {
+                    idContentString += "\n" + "Track2 equivalent data available:\n" + TagListParser.printTableTagsText(emvTrack2EquivalentData);
+
+                }
+
+
 
                 idContentString = idContentString + "\n" + "-------------------";
 
@@ -349,7 +396,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 aids.add(selectedAid);
                 emvCardSingleAids.add(emvCardSingleAid);
             }
-            // now store all data in the all model
+            // now store all data in the EmvCardAids model
             emvCardAids.setAids(aids);
             emvCardAids.setEmvCardSingleAids(emvCardSingleAids);
 
