@@ -53,6 +53,7 @@ import java.util.List;
 import de.androidcrypto.nfcemvccreaderdevnied.model.EmvCardSingleAid;
 import de.androidcrypto.nfcemvccreaderdevnied.model.SessionKey;
 import de.androidcrypto.nfcemvccreaderdevnied.model.TagNameValue;
+import de.androidcrypto.nfcemvccreaderdevnied.sascUtils.Util;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.DateUtils;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.EncryptionUtils;
 import de.androidcrypto.nfcemvccreaderdevnied.utils.TagListParser;
@@ -357,14 +358,87 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     idContentString = idContentString + "\n" + "readRecordsResponseTlvDump:\n" + readRecordsResponseTagListDump;
                 }
 
+                // Track 2 equivalent data in the list ?
+                List<TagNameValue> emvTrack2EquivalentData = TagListParser.getTrack2EquivalentData(allTlvList, EmvTags.TRACK_2_EQV_DATA.getTagBytes());
+                if (emvTrack2EquivalentData != null) {
+                    idContentString += "\n" + "Track2 equivalent data available:\n" + TagListParser.printTableTagsText(emvTrack2EquivalentData);
+                    allTlvList.addAll(emvTrack2EquivalentData);
+                }
 
+                //TagNameValue tnvPan = TagListParser.findTnv(new byte[]{(byte) 0xff, 0x22}, allTlvList);
                 TagNameValue tnvPan = TagListParser.findTnv(EmvTags.PAN.getTagBytes(), allTlvList);
                 if (tnvPan != null) {
                     String emvPan = BytesUtils.bytesToStringNoSpace(tnvPan.getTagValueBytes());
-                    idContentString = idContentString + "\n" + "PAN: " + emvPan;
+                    idContentString += "\n" + "PAN: " + emvPan;
+                } else {
+                    idContentString += "\n" + "NO PAN";
                 }
+                TagNameValue tnvPanSequenceNumber = TagListParser.findTnv(EmvTags.PAN_SEQUENCE_NUMBER.getTagBytes(), allTlvList);
+                if (tnvPanSequenceNumber != null) {
+                    String emvPanSequenceNumber = BytesUtils.bytesToStringNoSpace(tnvPanSequenceNumber.getTagValueBytes());
+                    idContentString += "\n" + "PAN Sequence Number: " + emvPanSequenceNumber;
+                }
+                TagNameValue tnvAppExpirationDate = TagListParser.findTnv(EmvTags.APP_EXPIRATION_DATE.getTagBytes(), allTlvList);
+                if (tnvAppExpirationDate != null) {
+                    idContentString += "\n" + "AppExpirationDate: " + BytesUtils.bytesToString(tnvAppExpirationDate.getTagValueBytes());
+                    //String emvAppExpirationDate = new String(tnvAppExpirationDate.getTagValueBytes());
+                    //idContentString += "\n" + "AppExpirationDate: " + emvAppExpirationDate;
+                }
+                TagNameValue tnvAppEffectiveDate = TagListParser.findTnv(EmvTags.APP_EFFECTIVE_DATE.getTagBytes(), allTlvList);
+                if (tnvAppEffectiveDate != null) {
+                    idContentString +="\n" + "AppEffectiveDate: " + BytesUtils.bytesToString(tnvAppEffectiveDate.getTagValueBytes());
+                    String emvAppEffectiveDate = new String(tnvAppEffectiveDate.getTagValueBytes());
+                    idContentString +="\n" + "AppEffectiveDate: " + emvAppEffectiveDate;
+                }
+                TagNameValue tnvAip = TagListParser.findTnv(EmvTags.APPLICATION_INTERCHANGE_PROFILE.getTagBytes(), allTlvList);
+                if (tnvAip != null) {
+                    String emvAip = BytesUtils.bytesToStringNoSpace(tnvAip.getTagValueBytes());
+                    idContentString += "\n" + "Aip: " + emvAip;
+                }
+
+                
+                /*
+                PrintFormattedHeader pfh = new PrintFormattedHeader(40, '#');
+                idContentString += "\n" + "------------------------\n";
+                idContentString += "\n" + "tablePrint of tagListNew";
+                idContentString += "\n" + pfh.buildHeader("tablePrint of allTlvList");
+                idContentString += "\n" + "size of allTlvList: " + allTlvList.size();
+                //idContentString = idContentString + "\n" + printTableTags(tagListNew);
+                idContentString += "\n" + TagListParser.printTableTagsText(allTlvList);
+                idContentString += "\n" + "------------------------\n";
+*/
                 // todo get single data like ATC, LeftPinTry etc
                 // todo generate the new tag list with analyzed data elements
+                idContentString += "\n" + "\n" + "Left Pin Try Counter";
+                byte[] leftPinTryCounterResponse = emvCardSingleAid.getCardLeftPinTryResponse();
+                if (leftPinTryCounterResponse != null) {
+                    byte[] data = TlvUtil.getValue(leftPinTryCounterResponse, EmvTags.PIN_TRY_COUNTER);
+                    idContentString += "\n" + "LeftPinTryCounter: " + BytesUtils.bytesToString(data);
+                    // build a new tag
+                    TagNameValue tnvNew = new TagNameValue();
+                    tnvNew = TagListParser.tagBuild(new byte[]{(byte) 0xfe, 0x01}, "PIN left try counter", TagValueTypeEnum.BINARY, data);
+                    allTlvList.add(tnvNew);
+                    tnvNew = TagListParser.tagBuild(EmvTags.PIN_TRY_COUNTER.getTagBytes(), "PIN left try counter", TagValueTypeEnum.BINARY, data);
+                    allTlvList.add(tnvNew);
+                } else {
+                    idContentString += "\n" + "no left Pin Try Counter Response available";
+                }
+                idContentString += "\n" + "\n" + "Application Transaction Counter";
+                byte[] applicationTransactionCounterResponse = emvCardSingleAid.getCardAtcResponse();
+                if (applicationTransactionCounterResponse != null) {
+                    byte[] data = TlvUtil.getValue(applicationTransactionCounterResponse, EmvTags.APP_TRANSACTION_COUNTER);
+                    idContentString += "\n" + "applicationTransactionCounter hex: " + BytesUtils.bytesToString(data);
+                    idContentString += "\n" + "applicationTransactionCounter dec: " + Util.byteArrayToInt(data);
+                    // build a new tag
+                    TagNameValue tnvNew = new TagNameValue();
+                    tnvNew = TagListParser.tagBuild(new byte[]{(byte) 0xfe, 0x02}, "ATC", TagValueTypeEnum.BINARY, data);
+                    allTlvList.add(tnvNew);
+                    tnvNew = TagListParser.tagBuild(EmvTags.APP_TRANSACTION_COUNTER.getTagBytes(), "ATC", TagValueTypeEnum.BINARY, data);
+                    allTlvList.add(tnvNew);
+                } else {
+                    idContentString += "\n" + "no Application Transaction Counter Response available";
+                }
+                
 
                 emvCardSingleAid.setAllTlvList(allTlvList);
 
@@ -380,12 +454,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                 // track 1
 
-                // Track 2 equivalent data in the list ?
-                List<TagNameValue> emvTrack2EquivalentData = TagListParser.getTrack2EquivalentData(allTlvList, EmvTags.TRACK_2_EQV_DATA.getTagBytes());
-                if (emvTrack2EquivalentData != null) {
-                    idContentString += "\n" + "Track2 equivalent data available:\n" + TagListParser.printTableTagsText(emvTrack2EquivalentData);
 
-                }
 
 
 

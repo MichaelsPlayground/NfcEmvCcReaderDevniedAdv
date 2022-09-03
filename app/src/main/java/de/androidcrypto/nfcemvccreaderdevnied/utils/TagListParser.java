@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -208,7 +209,8 @@ public class TagListParser {
     // find a tag in the tag list
     public static TagNameValue findTnv(byte[] tagBytes, List<TagNameValue> tnvs) {
         for (TagNameValue tnv : tnvs) {
-            if (tnv.getTagBytes().equals(tagBytes)) {
+            if (Arrays.equals(tnv.getTagBytes(), tagBytes)) {
+            //if (tnv.getTagBytes().equals(tagBytes)) {
                 return tnv;
             }
         }
@@ -287,12 +289,11 @@ public class TagListParser {
             tagListNew.add(tnvNew);
             tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x22}, "Track2 PAN", TagValueTypeEnum.BINARY, BytesUtils.fromString(cardNumber));
             tagListNew.add(tnvNew);
-
-            tnvNew = tagBuild(new byte[]{(byte) 0x5f, 0x24}, "Track2 ExpireDate", TagValueTypeEnum.TEXT, expireDateString.getBytes(StandardCharsets.UTF_8));
-            tagListNew.add(tnvNew);
+            // we should not write in tag 5f 24 as the format my differ to previous found date
+            // tnvNew = tagBuild(new byte[]{(byte) 0x5f, 0x24}, "Track2 ExpireDate", TagValueTypeEnum.TEXT, expireDateString.getBytes(StandardCharsets.UTF_8));
+            // tagListNew.add(tnvNew);
             tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x23}, "Track2 ExpireDate", TagValueTypeEnum.TEXT, expireDateString.getBytes(StandardCharsets.UTF_8));
             tagListNew.add(tnvNew);
-
             tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x24}, "Track2 Service1 Interchange", TagValueTypeEnum.TEXT, service1Interchange.getBytes(StandardCharsets.UTF_8));
             tagListNew.add(tnvNew);
             tnvNew = tagBuild(new byte[]{(byte) 0xff, 0x25}, "Track2 Service1 Technology", TagValueTypeEnum.TEXT, service1Technology.getBytes(StandardCharsets.UTF_8));
