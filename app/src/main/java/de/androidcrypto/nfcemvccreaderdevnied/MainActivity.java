@@ -410,7 +410,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 // todo get single data like ATC, LeftPinTry etc
                 // todo generate the new tag list with analyzed data elements
                 idContentString += "\n" + "\n" + "Left Pin Try Counter";
-                byte[] leftPinTryCounterResponse = emvCardSingleAid.getCardLeftPinTryResponse();
+                byte[] leftPinTryCounterResponse = parser.getDataLeftPinTryCounter();
                 if (leftPinTryCounterResponse != null) {
                     byte[] data = TlvUtil.getValue(leftPinTryCounterResponse, EmvTags.PIN_TRY_COUNTER);
                     idContentString += "\n" + "LeftPinTryCounter: " + BytesUtils.bytesToString(data);
@@ -423,12 +423,12 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 } else {
                     idContentString += "\n" + "no left Pin Try Counter Response available";
                 }
-                idContentString += "\n" + "\n" + "Application Transaction Counter";
-                byte[] applicationTransactionCounterResponse = emvCardSingleAid.getCardAtcResponse();
+                idContentString += "\n" + "\n" + "Application Transaction Counter (ATC)";
+                byte[] applicationTransactionCounterResponse = parser.getDataAtc();
                 if (applicationTransactionCounterResponse != null) {
                     byte[] data = TlvUtil.getValue(applicationTransactionCounterResponse, EmvTags.APP_TRANSACTION_COUNTER);
-                    idContentString += "\n" + "applicationTransactionCounter hex: " + BytesUtils.bytesToString(data);
-                    idContentString += "\n" + "applicationTransactionCounter dec: " + Util.byteArrayToInt(data);
+                    idContentString += "\n" + "applicationTransactionCounter hex: " + BytesUtils.bytesToString(applicationTransactionCounterResponse);
+                    //idContentString += "\n" + "applicationTransactionCounter dec: " + Util.byteArrayToInt(applicationTransactionCounterResponse);
                     // build a new tag
                     TagNameValue tnvNew = new TagNameValue();
                     tnvNew = TagListParser.tagBuild(new byte[]{(byte) 0xfe, 0x02}, "ATC", TagValueTypeEnum.BINARY, data);
@@ -438,7 +438,36 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 } else {
                     idContentString += "\n" + "no Application Transaction Counter Response available";
                 }
-                
+                idContentString += "\n" + "\n" + "Last Online Application Transaction Counter (ATC)";
+                byte[] lastOnlineApplicationTransactionCounterResponse = parser.getDataLastOnlineAtc();
+                if (lastOnlineApplicationTransactionCounterResponse != null) {
+                    byte[] data = TlvUtil.getValue(lastOnlineApplicationTransactionCounterResponse, EmvTags.LAST_ONLINE_ATC_REGISTER);
+                    idContentString += "\n" + "lastOnlineApplicationTransactionCounter hex: " + BytesUtils.bytesToString(data);
+                    //idContentString += "\n" + "lastOnlineApplicationTransactionCounter dec: " + Util.byteArrayToInt(data);
+                    // build a new tag
+                    TagNameValue tnvNew = new TagNameValue();
+                    tnvNew = TagListParser.tagBuild(new byte[]{(byte) 0xfe, 0x03}, "Last online ATC", TagValueTypeEnum.BINARY, data);
+                    allTlvList.add(tnvNew);
+                    tnvNew = TagListParser.tagBuild(EmvTags.LAST_ONLINE_ATC_REGISTER.getTagBytes(), "Last online ATC", TagValueTypeEnum.BINARY, data);
+                    allTlvList.add(tnvNew);
+                } else {
+                    idContentString += "\n" + "no Last Online Application Transaction Counter Response available";
+                }
+                idContentString += "\n" + "\n" + "Log Format";
+                byte[] dataLogFormatResponse = parser.getDataLogFormat();
+                if (dataLogFormatResponse != null) {
+                    byte[] data = TlvUtil.getValue(dataLogFormatResponse, EmvTags.LOG_FORMAT);
+                    idContentString += "\n" + "logFormat hex: " + BytesUtils.bytesToString(data);
+                    //idContentString += "\n" + "lastOnlineApplicationTransactionCounter dec: " + Util.byteArrayToInt(data);
+                    // build a new tag
+                    TagNameValue tnvNew = new TagNameValue();
+                    tnvNew = TagListParser.tagBuild(new byte[]{(byte) 0xfe, 0x04}, "Log Format", TagValueTypeEnum.BINARY, data);
+                    allTlvList.add(tnvNew);
+                    tnvNew = TagListParser.tagBuild(EmvTags.LOG_FORMAT.getTagBytes(), "Log Format", TagValueTypeEnum.BINARY, data);
+                    allTlvList.add(tnvNew);
+                } else {
+                    idContentString += "\n" + "no Log Format Response available";
+                }
 
                 emvCardSingleAid.setAllTlvList(allTlvList);
 

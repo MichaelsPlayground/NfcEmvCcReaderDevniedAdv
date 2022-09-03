@@ -837,10 +837,12 @@ public class EmvTemplate {
     public byte[] getDataAtc() throws CommunicationException {
         byte[] apduGetDataCommand = new CommandApdu(CommandEnum.GET_DATA, 0x9F, 0x36, null, 0).toBytes();
         byte[] apduGetDataResponse = provider.transceive(apduGetDataCommand);
+        /*
         System.out.println("#*# apduGetDataCommand for ATC");
         System.out.println("#*# apduGetDataCommand: " + BytesUtils.bytesToString(apduGetDataCommand));
         System.out.println("#*# apduGetDataResponse: " + BytesUtils.bytesToString(apduGetDataResponse));
         System.out.println("#*# apduGetDataResponse\n" + TlvUtil.prettyPrintAPDUResponse(apduGetDataResponse));
+         */
         emvCardSingleAid.setCardAtcCommand(apduGetDataCommand);
         emvCardSingleAid.setCardAtcResponse(apduGetDataResponse);
         return apduGetDataResponse;
@@ -849,10 +851,12 @@ public class EmvTemplate {
     public byte[] getDataLastOnlineAtc() throws CommunicationException {
         byte[] apduGetDataCommand = new CommandApdu(CommandEnum.GET_DATA, 0x9F, 0x13, null, 0).toBytes();
         byte[] apduGetDataResponse = provider.transceive(apduGetDataCommand);
+        /*
         System.out.println("#*# apduGetDataCommand for Last Online ATC");
         System.out.println("#*# apduGetDataCommand: " + BytesUtils.bytesToString(apduGetDataCommand));
         System.out.println("#*# apduGetDataResponse: " + BytesUtils.bytesToString(apduGetDataResponse));
         System.out.println("#*# apduGetDataAtcResponse\n" + TlvUtil.prettyPrintAPDUResponse(apduGetDataResponse));
+        */
         emvCardSingleAid.setCardLastOnlineAtcCommand(apduGetDataCommand);
         emvCardSingleAid.setCardLastOnlineAtcResponse(apduGetDataResponse);
         return apduGetDataResponse;
@@ -862,10 +866,12 @@ public class EmvTemplate {
         // GET_DATA: 0x80, 0xCA, 0x00, 0x00, 0x9F, 0x17, 0x00
         byte[] apduGetDataCommand = new CommandApdu(CommandEnum.GET_DATA, 0x9F, 0x17, null, 0).toBytes();
         byte[] apduGetDataResponse = provider.transceive(apduGetDataCommand);
+        /*
         System.out.println("#*# apduGetDataCommand for Left Pin Try Counter");
         System.out.println("#*# apduGetDataCommand: " + BytesUtils.bytesToString(apduGetDataCommand));
         System.out.println("#*# apduGetDataResponse: " + BytesUtils.bytesToString(apduGetDataResponse));
         System.out.println("#*# apduGetDataAtcResponse\n" + TlvUtil.prettyPrintAPDUResponse(apduGetDataResponse));
+         */
         emvCardSingleAid.setCardLeftPinTryCommand(apduGetDataCommand);
         emvCardSingleAid.setCardLeftPinTryResponse(apduGetDataResponse);
         return apduGetDataResponse;
@@ -874,10 +880,12 @@ public class EmvTemplate {
     public byte[] getDataLogFormat() throws CommunicationException {
         byte[] apduGetDataCommand = new CommandApdu(CommandEnum.GET_DATA, 0x9F, 0x4F, null, 0).toBytes();
         byte[] apduGetDataResponse = provider.transceive(apduGetDataCommand);
+        /*
         System.out.println("#*# apduGetDataCommand for LogFormat");
         System.out.println("#*# apduGetDataCommand: " + BytesUtils.bytesToString(apduGetDataCommand));
         System.out.println("#*# apduGetDataResponse: " + BytesUtils.bytesToString(apduGetDataResponse));
         System.out.println("#*# apduGetDataAtcResponse\n" + TlvUtil.prettyPrintAPDUResponse(apduGetDataResponse));
+         */
         emvCardSingleAid.setCardLogFormatCommand(apduGetDataCommand);
         emvCardSingleAid.setCardLogFormatResponse(apduGetDataResponse);
         return apduGetDataResponse;
