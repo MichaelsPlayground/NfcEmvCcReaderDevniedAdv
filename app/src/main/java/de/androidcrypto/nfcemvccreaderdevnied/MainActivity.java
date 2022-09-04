@@ -425,16 +425,19 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 }
                 idContentString += "\n" + "\n" + "Application Transaction Counter (ATC)";
                 byte[] applicationTransactionCounterResponse = parser.getDataAtc();
+                idContentString += "\n" + "applicationTransactionCounterResponse: " + BytesUtils.bytesToString(applicationTransactionCounterResponse);
                 if (applicationTransactionCounterResponse != null) {
                     byte[] data = TlvUtil.getValue(applicationTransactionCounterResponse, EmvTags.APP_TRANSACTION_COUNTER);
-                    idContentString += "\n" + "applicationTransactionCounter hex: " + BytesUtils.bytesToString(applicationTransactionCounterResponse);
-                    //idContentString += "\n" + "applicationTransactionCounter dec: " + Util.byteArrayToInt(applicationTransactionCounterResponse);
-                    // build a new tag
-                    TagNameValue tnvNew = new TagNameValue();
-                    tnvNew = TagListParser.tagBuild(new byte[]{(byte) 0xfe, 0x02}, "ATC", TagValueTypeEnum.BINARY, data);
-                    allTlvList.add(tnvNew);
-                    tnvNew = TagListParser.tagBuild(EmvTags.APP_TRANSACTION_COUNTER.getTagBytes(), "ATC", TagValueTypeEnum.BINARY, data);
-                    allTlvList.add(tnvNew);
+                    if (data != null) {
+                        idContentString += "\n" + "applicationTransactionCounter hex: " + BytesUtils.bytesToString(data);
+                        idContentString += "\n" + "applicationTransactionCounter dec: " + Util.byteArrayToInt(data);
+                        // build a new tag
+                        TagNameValue tnvNew = new TagNameValue();
+                        tnvNew = TagListParser.tagBuild(new byte[]{(byte) 0xfe, 0x02}, "ATC", TagValueTypeEnum.BINARY, data);
+                        allTlvList.add(tnvNew);
+                        tnvNew = TagListParser.tagBuild(EmvTags.APP_TRANSACTION_COUNTER.getTagBytes(), "ATC", TagValueTypeEnum.BINARY, data);
+                        allTlvList.add(tnvNew);
+                    }
                 } else {
                     idContentString += "\n" + "no Application Transaction Counter Response available";
                 }
@@ -1120,6 +1123,26 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 Intent i = new Intent(MainActivity.this, VerifyPin.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mVerifyPin3 = menu.findItem(R.id.action_verify_pin3);
+        mVerifyPin3.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, VerifyPin3.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mVerifyPin4 = menu.findItem(R.id.action_verify_pin4);
+        mVerifyPin4.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, VerifyPin4.class);
                 startActivity(i);
                 return false;
             }

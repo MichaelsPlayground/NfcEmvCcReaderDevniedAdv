@@ -64,6 +64,16 @@
         app:showAsAction="never"/>
 
     <item
+        android:id="@+id/action_verify_pin3"
+        android:title="Verify PIN 3"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_verify_pin4"
+        android:title="Verify PIN 4"
+        app:showAsAction="never"/>
+
+    <item
         android:id="@+id/action_read_girocard_manually"
         android:title="Read Girocard manually"
         app:showAsAction="never"/>

@@ -16,6 +16,8 @@
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_set_session_key.xml" value="0.254981884057971" />
         <entry key="app/src/main/res/layout/activity_verify_pin.xml" value="0.15307971014492755" />
+        <entry key="app/src/main/res/layout/activity_verify_pin3.xml" value="0.11770833333333333" />
+        <entry key="app/src/main/res/layout/activity_verify_pin4.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/detail_afl.xml" value="0.1344984802431611" />
         <entry key="app/src/main/res/layout/detail_apdu_gpo.xml" value="0.1344984802431611" />
         <entry key="app/src/main/res/layout/detail_apdu_gpo_visa.xml" value="0.1344984802431611" />

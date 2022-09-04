@@ -40,6 +40,12 @@
             android:name=".VerifyPin2"
             android:exported="false" />
         <activity
+            android:name=".VerifyPin3"
+            android:exported="false" />
+        <activity
+            android:name=".VerifyPin4"
+            android:exported="false" />
+        <activity
             android:name=".ReadGirocardManually"
             android:exported="false" />
         <activity

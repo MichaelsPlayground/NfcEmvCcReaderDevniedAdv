@@ -667,7 +667,7 @@ Cristian Radu
     public static String printResponseParsed(String responseParsed) {
         if (isPrintResponseParsedData) {
             if (responseParsed != null) {
-                return trimLeadingLineFeeds(responseParsed);
+                return Utils.trimLeadingLineFeeds(responseParsed);
             } else {
                 return "response parsed data is null";
             }
@@ -676,10 +676,7 @@ Cristian Radu
         }
     }
 
-    public static String trimLeadingLineFeeds (String input) {
-        String[] output = input.split("^\\n+", 2);
-        return output.length > 1 ? output[1] : output[0];
-    }
+
 
     /**
      * section for deep card analyzing end

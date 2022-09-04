@@ -130,14 +130,13 @@ public class ApplicationInterchangeProfile {
 
     public void dump(PrintWriter pw, int indent){
         pw.println(Util.getSpaces(indent)+"Application Interchange Profile");
-        String indentStr = Util.getSpaces(indent+3);
-
+        String indentStr = Util.getSpaces(indent+2);
         pw.println(indentStr+getSDASupportedString());
         pw.println(indentStr+getDDASupportedString());
+        pw.println(indentStr+getCDASupportedString());
         pw.println(indentStr+getCardholderVerificationSupportedString());
         pw.println(indentStr+getTerminalRiskManagementToBePerformedString());
         pw.println(indentStr+getIssuerAuthenticationIsSupportedString());
-        pw.println(indentStr+getCDASupportedString());
     }
 
     public static void main(String[] args){

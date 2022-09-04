@@ -123,6 +123,11 @@ public class Utils {
         return byteArray;
     }
 
+    public static String trimLeadingLineFeeds (String input) {
+        String[] output = input.split("^\\n+", 2);
+        return output.length > 1 ? output[1] : output[0];
+    }
+
     public static String parseTextrecordPayload(byte[] ndefPayload) {
         int languageCodeLength = Array.getByte(ndefPayload, 0);
         int ndefPayloadLength = ndefPayload.length;
